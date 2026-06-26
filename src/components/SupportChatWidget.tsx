@@ -9,8 +9,21 @@ export default function SupportChatWidget() {
   const [isSending, setIsSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // If there's no logged-in user, we can still show support chat, but let's encourage signup/login or tie chat to session
-  const activeChat = currentUser ? supportChats.find((c) => c.userId === currentUser.id) : null;
+  // Ensure guestId exists in localStorage if not logged in
+  useEffect(() => {
+    if (!currentUser) {
+      let cachedGuestId = localStorage.getItem("taxid_guest_id");
+      if (!cachedGuestId) {
+        cachedGuestId = `guest-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem("taxid_guest_id", cachedGuestId);
+      }
+    }
+  }, [currentUser]);
+
+  const guestId = !currentUser ? localStorage.getItem("taxid_guest_id") : null;
+  const activeChat = currentUser 
+    ? supportChats.find((c) => c.userId === currentUser.id) 
+    : (guestId ? supportChats.find((c) => c.userId === guestId) : null);
   const messages = activeChat?.messages || [];
   const isRepResponding = activeChat?.isRepResponding || false;
 
@@ -22,7 +35,7 @@ export default function SupportChatWidget() {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputText.trim() || !currentUser || isSending) return;
+    if (!inputText.trim() || isSending) return;
 
     const textToSend = inputText.trim();
     setInputText("");
@@ -112,33 +125,30 @@ export default function SupportChatWidget() {
             ref={scrollRef}
             className="flex-1 p-4 overflow-y-auto bg-slate-50/50 space-y-3"
           >
-            {/* If no logged in user */}
-            {!currentUser ? (
-              <div className="text-center py-10 px-4 space-y-3">
-                <Bot className="w-8 h-8 text-slate-300 mx-auto" />
-                <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-                  Support chat is available for verified members. Please sign up or log in to query with our active support team.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsOpen(false);
-                    const authSection = document.getElementById("auth-form-container");
-                    authSection?.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold rounded-lg transition uppercase tracking-wide inline-flex items-center gap-1"
-                >
-                  <span>Go to Login / Sign Up</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            ) : messages.length === 0 ? (
-              <div className="text-center py-12 px-6 space-y-2">
+            {/* Messages Area */}
+            {messages.length === 0 ? (
+              <div className="text-center py-12 px-6 space-y-3">
                 <span className="text-2xl">👋</span>
                 <h5 className="text-xs font-black text-slate-700">Welcome to TaxID Support!</h5>
                 <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  Ask me about pricing, how to retrieve JTB slips, or upload questions. One of our support agents is also notified and can join live!
+                  Ask us about pricing, how to retrieve JTB slips, or upload questions. One of our support agents is also notified and can join live!
                 </p>
+                {!currentUser && (
+                  <div className="mt-2 p-2 bg-emerald-50 border border-emerald-100 rounded-xl text-[9px] font-semibold text-slate-600 space-y-1">
+                    <p className="text-emerald-700">You are chatting as a guest visitor.</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsOpen(false);
+                        const authSection = document.getElementById("auth-form-container");
+                        authSection?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                      className="text-emerald-800 underline hover:text-emerald-950 block mx-auto mt-1"
+                    >
+                      Sign in or Register to get full access
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               messages.map((msg) => {
@@ -151,10 +161,10 @@ export default function SupportChatWidget() {
                     <div
                       className={`max-w-[80%] rounded-2xl p-3 text-xs leading-relaxed font-medium shadow-sm ${
                         isMe
-                          ? "bg-emerald-600 text-white rounded-tr-none"
-                          : msg.sender === "admin"
-                          ? "bg-slate-900 text-white rounded-tl-none border border-slate-800"
-                          : "bg-white text-slate-800 border border-slate-100 rounded-tl-none"
+                           ? "bg-emerald-600 text-white rounded-tr-none"
+                           : msg.sender === "admin"
+                           ? "bg-slate-900 text-white rounded-tl-none border border-slate-800"
+                           : "bg-white text-slate-800 border border-slate-100 rounded-tl-none"
                       }`}
                     >
                       {msg.text}
@@ -180,25 +190,23 @@ export default function SupportChatWidget() {
           </div>
 
           {/* Message Input Form Panel */}
-          {currentUser && (
-            <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-100 flex gap-2">
-              <input
-                type="text"
-                required
-                placeholder="Ask about payments, JTB slips, or limits..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-100 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-              <button
-                type="submit"
-                disabled={isSending}
-                className="w-9 h-9 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl flex items-center justify-center transition shrink-0 cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
-          )}
+          <form onSubmit={handleSendMessage} className="p-3 bg-white border-t border-slate-100 flex gap-2">
+            <input
+              type="text"
+              required
+              placeholder="Ask about payments, JTB slips, or limits..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              className="flex-1 px-4 py-2 bg-slate-50 border border-slate-100 focus:bg-white rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
+            <button
+              type="submit"
+              disabled={isSending}
+              className="w-9 h-9 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl flex items-center justify-center transition shrink-0 cursor-pointer"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </form>
 
         </div>
       )}

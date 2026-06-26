@@ -54,7 +54,12 @@ export default function App() {
   }
 
   if (!currentUser) {
-    return <LandingPage />;
+    return (
+      <>
+        <LandingPage />
+        <SupportChatWidget />
+      </>
+    );
   }
 
   const trialActive = isTrialActive();

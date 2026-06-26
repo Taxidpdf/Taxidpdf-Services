@@ -1045,16 +1045,32 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   // Support Chat Sessions
   const sendUserChatMessage = async (text: string) => {
-    if (!currentUser || !text.trim()) return;
+    if (!text.trim()) return;
 
-    // Find or create current user support session
-    let activeChat = supportChats.find((c) => c.userId === currentUser.id);
+    // Get guest ID or user ID
+    const isGuest = !currentUser;
+    let userId = currentUser ? currentUser.id : "";
+    let userEmail = currentUser ? currentUser.email : "guest@taxidpdf.com";
+    let userName = currentUser ? currentUser.fullName : "Guest Visitor";
+
+    if (isGuest) {
+      let cachedGuestId = localStorage.getItem("taxid_guest_id");
+      if (!cachedGuestId) {
+        cachedGuestId = `guest-${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem("taxid_guest_id", cachedGuestId);
+      }
+      userId = cachedGuestId;
+      userName = `Guest Visitor (${cachedGuestId.slice(-4).toUpperCase()})`;
+    }
+
+    // Find or create support session
+    let activeChat = supportChats.find((c) => c.userId === userId);
     if (!activeChat) {
       activeChat = {
-        id: `chat-${currentUser.id}`,
-        userId: currentUser.id,
-        userEmail: currentUser.email,
-        userName: currentUser.fullName,
+        id: `chat-${userId}`,
+        userId: userId,
+        userEmail: userEmail,
+        userName: userName,
         messages: [],
         lastUpdated: new Date().toISOString(),
         isRepResponding: false
@@ -1076,7 +1092,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     };
 
     setSupportChats((prev) => {
-      const filtered = prev.filter((c) => c.userId !== currentUser.id);
+      const filtered = prev.filter((c) => c.userId !== userId);
       const newChats = [updatedChat, ...filtered];
       localStorage.setItem(CHATS_KEY, JSON.stringify(newChats));
       return newChats;
@@ -1112,7 +1128,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         };
 
         setSupportChats((prev) => {
-          const filtered = prev.filter((c) => c.userId !== currentUser.id);
+          const filtered = prev.filter((c) => c.userId !== userId);
           const newChats = [finalChat, ...filtered];
           localStorage.setItem(CHATS_KEY, JSON.stringify(newChats));
           return newChats;
@@ -1168,9 +1184,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   };
 
   const clearChatSession = () => {
-    if (!currentUser) return;
-    const chatId = `chat-${currentUser.id}`;
-    const updatedChats = supportChats.filter((c) => c.userId !== currentUser.id);
+    let userId = currentUser ? currentUser.id : localStorage.getItem("taxid_guest_id");
+    if (!userId) return;
+    const chatId = `chat-${userId}`;
+    const updatedChats = supportChats.filter((c) => c.userId !== userId);
     setSupportChats(updatedChats);
     localStorage.setItem(CHATS_KEY, JSON.stringify(updatedChats));
     deleteSupportChatFromSupabase(chatId).catch(err => console.warn("Error deleting support chat from Supabase:", err));
