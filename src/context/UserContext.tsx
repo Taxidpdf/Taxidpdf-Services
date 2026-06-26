@@ -10,7 +10,8 @@ import {
   fetchPendingTopupsFromSupabase,
   savePendingTopupToSupabase,
   fetchSupportChatsFromSupabase,
-  saveSupportChatToSupabase
+  saveSupportChatToSupabase,
+  deleteSupportChatFromSupabase
 } from "../lib/supabaseSync";
 
 interface UserContextType {
@@ -1074,14 +1075,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       lastUpdated: new Date().toISOString()
     };
 
-    const updatedChats = [updatedChat, ...supportChats.filter((c) => c.userId !== currentUser.id)];
-    setSupportChats(updatedChats);
-    localStorage.setItem(CHATS_KEY, JSON.stringify(updatedChats));
+    setSupportChats((prev) => {
+      const filtered = prev.filter((c) => c.userId !== currentUser.id);
+      const newChats = [updatedChat, ...filtered];
+      localStorage.setItem(CHATS_KEY, JSON.stringify(newChats));
+      return newChats;
+    });
 
     saveSupportChatToSupabase(updatedChat).catch(err => console.warn("Error saving user chat to Supabase:", err));
 
-    // If a human representative is NOT responding, trigger AI reply
-    if (!activeChat.isRepResponding) {
+    // ChatGPT-like interactive AI response:
+    // AI always responds unless the admin is in an active real-time takeover (sent a message in the last 15 seconds)
+    const lastMessage = activeChat.messages[activeChat.messages.length - 1];
+    const isRecentAdminMessage = lastMessage && lastMessage.sender === "admin" && (Date.now() - new Date(lastMessage.date).getTime() < 15000);
+
+    if (!isRecentAdminMessage) {
       try {
         const response = await fetch("/api/support-chat", {
           method: "POST",
@@ -1103,9 +1111,12 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           lastUpdated: new Date().toISOString()
         };
 
-        const finalChats = [finalChat, ...supportChats.filter((c) => c.userId !== currentUser.id)];
-        setSupportChats(finalChats);
-        localStorage.setItem(CHATS_KEY, JSON.stringify(finalChats));
+        setSupportChats((prev) => {
+          const filtered = prev.filter((c) => c.userId !== currentUser.id);
+          const newChats = [finalChat, ...filtered];
+          localStorage.setItem(CHATS_KEY, JSON.stringify(newChats));
+          return newChats;
+        });
 
         saveSupportChatToSupabase(finalChat).catch(err => console.warn("Error saving AI chat response to Supabase:", err));
       } catch (err) {
@@ -1158,9 +1169,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const clearChatSession = () => {
     if (!currentUser) return;
+    const chatId = `chat-${currentUser.id}`;
     const updatedChats = supportChats.filter((c) => c.userId !== currentUser.id);
     setSupportChats(updatedChats);
     localStorage.setItem(CHATS_KEY, JSON.stringify(updatedChats));
+    deleteSupportChatFromSupabase(chatId).catch(err => console.warn("Error deleting support chat from Supabase:", err));
   };
 
   return (
@@ -1213,3 +1226,27 @@ export function useUser() {
   }
   return context;
 }
+
+export const NEUTRAL_AGENT_NAMES = [
+  "Agent Sarah",
+  "Agent David",
+  "Agent Grace",
+  "Agent Victor",
+  "Agent Jessica",
+  "Agent Emmanuel",
+  "Agent Michelle",
+  "Agent Peter",
+  "Agent Sharon",
+  "Agent Chidi"
+];
+
+export function getNeutralAgentNameForChat(chatId: string): string {
+  if (!chatId) return "Support Representative";
+  let hash = 0;
+  for (let i = 0; i < chatId.length; i++) {
+    hash = chatId.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % NEUTRAL_AGENT_NAMES.length;
+  return NEUTRAL_AGENT_NAMES[index];
+}
+

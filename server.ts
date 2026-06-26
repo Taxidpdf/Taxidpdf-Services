@@ -207,7 +207,7 @@ app.post("/api/support-chat", async (req, res) => {
 
   const ai = getGeminiClient();
   const conversationHistory = messages
-    .map((m: any) => `${m.sender === "user" ? "Customer" : m.sender === "admin" ? "Agent Franklin" : "Support Rep (AI)"}: ${m.text}`)
+    .map((m: any) => `${m.sender === "user" ? "Customer" : m.sender === "admin" ? "Support Agent" : "Support Rep (AI)"}: ${m.text}`)
     .join("\n");
 
   const prompt = `
@@ -224,9 +224,11 @@ Core context of the website:
   - Premium Plan: ₦5,000/month (includes 50 downloads).
   - Unlimited Plan: ₦10,000/month (includes unlimited downloads).
 - All plans expire exactly every 30 days, upon which the entire remaining wallet credit balance is reset to 0.
-- Manual Topups: If a user is debited but not credited due to network issues, they can click "Report Uncredited Payment" to request manual approval from the admin, Coach Franklin.
+- Manual Topups: If a user is debited but not credited due to network issues, they can click "Report Uncredited Payment" to request manual approval from the support team.
 
 Answer the customer's query professionally, politely, and in a helpful, concise manner. Be friendly and direct.
+NEVER reveal or mention the name "Coach Franklin" or "Franklin". If a user asks who the owner or admin is, politely state that you are the taxidpdf.com Customer Support Team and are here to help them succeed.
+
 Current Conversation:
 ${conversationHistory}
 
@@ -240,8 +242,8 @@ Response (Keep it conversational, warm, and professional, under 4 sentences):
     
     if (lastUserMessage.includes("pay") || lastUserMessage.includes("fund") || lastUserMessage.includes("price") || lastUserMessage.includes("cost") || lastUserMessage.includes("amount")) {
       reply = "Our pricing plans include the 24-Hour Trial (first slip is ₦100), Starter On-Demand (₦750 per slip), Basic (₦2,500 for 5 slips), Premium (₦5,000 for 50 slips), and Unlimited (₦10,000). Let me know if you need help funding your wallet!";
-    } else if (lastUserMessage.includes("admin") || lastUserMessage.includes("franklin")) {
-      reply = "For security and advanced administrative approvals, our chief administrator (Coach Franklin) monitors this support channel and can take over this chat to assist you directly.";
+    } else if (lastUserMessage.includes("admin") || lastUserMessage.includes("owner")) {
+      reply = "For security and advanced administrative approvals, our support team monitors this channel and can assist you directly.";
     } else if (lastUserMessage.includes("cac") || lastUserMessage.includes("official") || lastUserMessage.includes("partner")) {
       reply = "Please note that we are an independent third-party helper portal. We are not official partners of CAC, JTB, or NRS. We utilize public information to generate high-quality premium slips.";
     } else if (lastUserMessage.includes("expire") || lastUserMessage.includes("30-day") || lastUserMessage.includes("30 days")) {

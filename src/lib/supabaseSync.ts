@@ -370,3 +370,19 @@ export async function saveSupportChatToSupabase(chat: SupportChat): Promise<void
     console.warn("Error saving support chat to Supabase (using local backup):", error);
   }
 }
+
+export async function deleteSupportChatFromSupabase(chatId: string): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const chatUuid = toUUID(chatId);
+  try {
+    // Delete messages first due to foreign key constraints
+    await supabase.from('chat_messages').delete().eq('chat_id', chatUuid);
+    // Delete the chat session row
+    await supabase.from('support_chats').delete().eq('id', chatUuid);
+  } catch (error) {
+    console.warn("Error deleting support chat from Supabase:", error);
+  }
+}
+

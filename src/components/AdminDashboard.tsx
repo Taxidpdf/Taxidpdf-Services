@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser, getNeutralAgentNameForChat } from "../context/UserContext";
 import { SubscriptionTier, SavedSlip, PortalSettings } from "../types";
 import { 
   Users, 
@@ -159,7 +159,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
             <div className="w-12 h-12 rounded-2xl bg-emerald-600/15 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400">
               <Lock className="w-6 h-6" />
             </div>
-            <h2 className="text-xl font-black text-white tracking-tight">Coach Franklin Portal Admin</h2>
+            <h2 className="text-xl font-black text-white tracking-tight">Chief Admin Portal</h2>
             <p className="text-xs text-slate-400">Authorized personnel only. Provide password to unlock dynamic CMS & support chat overrides.</p>
           </div>
 
@@ -501,10 +501,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center font-extrabold text-white text-base shadow-lg shadow-emerald-950">
-              CF
+              AD
             </div>
             <div>
-              <h1 className="text-sm font-black tracking-wide leading-tight text-white uppercase">Coach Franklin Executive Panel</h1>
+              <h1 className="text-sm font-black tracking-wide leading-tight text-white uppercase">System Administrator Panel</h1>
               <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 Secure Dynamic Bypass Mode
@@ -1209,7 +1209,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {/* Console Header */}
                     <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-4">
                       <div>
-                        <h4 className="text-sm font-black text-white">{activeChatSession.userName}</h4>
+                        <h4 className="text-sm font-black text-white">
+                          {activeChatSession.userName}
+                          <span className="text-[9px] font-normal text-slate-400 ml-2 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
+                            Assigned Agent Name: {getNeutralAgentNameForChat(activeChatSession.id)}
+                          </span>
+                        </h4>
                         <span className="text-[10px] text-slate-400 font-semibold">{activeChatSession.userEmail}</span>
                       </div>
 
@@ -1263,7 +1268,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <input
                         type="text"
                         required
-                        placeholder="Type reply as Franklin (this automatically overrides AI responder)..."
+                        placeholder="Type reply as support agent (automatically overrides AI responder)..."
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
                         className="flex-1 px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500 text-white"
@@ -1358,7 +1363,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-6">
                 <div>
                   <h3 className="text-sm font-extrabold text-white">Super Slip PDF Generator Bypass</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">As Chief Administrator (Franklin), you can generate high-quality JTB-watermarked TIN slips for free, with customized corporate naming and details.</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">As Chief Administrator, you can generate high-quality JTB-watermarked TIN slips for free, with customized corporate naming and details.</p>
                 </div>
 
                 <form onSubmit={handleSuperSlipGen} className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-semibold">

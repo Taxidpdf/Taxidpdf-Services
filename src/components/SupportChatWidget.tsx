@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useUser } from "../context/UserContext";
+import { useUser, getNeutralAgentNameForChat } from "../context/UserContext";
 import { MessageCircle, Send, X, Bot, User as UserIcon, Shield, Minus, ArrowRight } from "lucide-react";
 
 export default function SupportChatWidget() {
@@ -71,7 +71,7 @@ export default function SupportChatWidget() {
               </div>
               <div>
                 <h4 className="text-xs font-black tracking-wide leading-tight">
-                  {isRepResponding ? "Coach Franklin (Support)" : "TaxID AI Assistant"}
+                  {isRepResponding ? `${getNeutralAgentNameForChat(activeChat?.id || "")} (Support)` : "TaxID AI Assistant"}
                 </h4>
                 <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-1 mt-0.5 uppercase tracking-wider">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -117,7 +117,7 @@ export default function SupportChatWidget() {
               <div className="text-center py-10 px-4 space-y-3">
                 <Bot className="w-8 h-8 text-slate-300 mx-auto" />
                 <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-                  Support chat is available for verified members. Please sign up or log in to query with Coach Franklin.
+                  Support chat is available for verified members. Please sign up or log in to query with our active support team.
                 </p>
                 <button
                   type="button"
@@ -137,7 +137,7 @@ export default function SupportChatWidget() {
                 <span className="text-2xl">👋</span>
                 <h5 className="text-xs font-black text-slate-700">Welcome to TaxID Support!</h5>
                 <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">
-                  Ask me about pricing, how to retrieve JTB slips, or upload questions. Coach Franklin is also notified and can join live!
+                  Ask me about pricing, how to retrieve JTB slips, or upload questions. One of our support agents is also notified and can join live!
                 </p>
               </div>
             ) : (

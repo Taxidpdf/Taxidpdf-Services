@@ -317,7 +317,7 @@ export default function WalletAndSubs() {
     }
 
     requestManualTopup(amt, reportRef);
-    setReportSuccess("Your uncredited payment report has been submitted to Chief Admin (Coach Franklin) for instant manual review and credit approval!");
+    setReportSuccess("Your uncredited payment report has been submitted to the Admin Support Team for instant manual review and credit approval!");
     setReportAmount("");
     setReportRef("");
   };
@@ -625,7 +625,7 @@ export default function WalletAndSubs() {
           <div>
             <h3 className="text-base font-extrabold text-slate-800">Report Uncredited Payment</h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Did a network glitch prevent your transfer from showing in your wallet? Report it below with transaction details. Coach Franklin will review and approve it manually!
+              Did a network glitch prevent your transfer from showing in your wallet? Report it below with transaction details. Our Admin Support Team will review and approve it manually!
             </p>
           </div>
         </div>
