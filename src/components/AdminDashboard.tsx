@@ -303,12 +303,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           useCORS: true,
           logging: true,
           backgroundColor: "#ffffff",
-          width: 794,
-          height: 1123,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 794,
-          windowHeight: 1123,
           onclone: (clonedDoc) => {
             try {
               // 1. Process style tags to strip oklch declarations
@@ -387,12 +381,6 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           useCORS: false,
           logging: true,
           backgroundColor: "#ffffff",
-          width: 794,
-          height: 1123,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 794,
-          windowHeight: 1123,
           onclone: (clonedDoc) => {
             try {
               // 1. Process style tags to strip oklch declarations

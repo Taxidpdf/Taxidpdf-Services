@@ -135,12 +135,6 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
           useCORS: true,
           logging: true,
           backgroundColor: "#ffffff",
-          width: 794,
-          height: 1123,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 794,
-          windowHeight: 1123,
           onclone: (clonedDoc) => {
             try {
               // 1. Process style tags to strip oklch declarations
@@ -219,12 +213,6 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
           useCORS: false,
           logging: true,
           backgroundColor: "#ffffff",
-          width: 794,
-          height: 1123,
-          scrollX: 0,
-          scrollY: 0,
-          windowWidth: 794,
-          windowHeight: 1123,
           onclone: (clonedDoc) => {
             try {
               // 1. Process style tags to strip oklch declarations
@@ -516,33 +504,42 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
             <div 
               style={{ 
                 height: `${1123 * scale}px`, 
-                width: `${794 * scale}px` 
+                width: `${794 * scale}px`,
+                position: "relative"
               }} 
-              className="relative shrink-0 transition-all duration-300"
+              className="shrink-0 transition-all duration-300"
             >
-              {/* The Actual Printable JTB National TIN Certificate Slip */}
+              {/* Scale wrapper so the printable-area doesn't have the transform scale in the DOM structure */}
               <div
-                id="printable-area"
-                ref={certificateRef}
-                className="w-[794px] h-[1123px] shrink-0 overflow-hidden"
                 style={{
-                  fontFamily: "'Inter', sans-serif",
-                  boxSizing: "border-box",
                   transform: `scale(${scale})`,
                   transformOrigin: "top left",
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
                   width: "794px",
                   height: "1123px",
-                  backgroundColor: "#f8faf9",
-                  padding: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)"
+                  position: "absolute",
+                  left: 0,
+                  top: 0
                 }}
               >
+                {/* The Actual Printable JTB National TIN Certificate Slip */}
+                <div
+                  id="printable-area"
+                  ref={certificateRef}
+                  className="w-[794px] h-[1123px] shrink-0 overflow-hidden"
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    boxSizing: "border-box",
+                    width: "794px",
+                    height: "1123px",
+                    backgroundColor: "#f8faf9",
+                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                    position: "relative"
+                  }}
+                >
                 {/* Solid Green Top Bar */}
                 <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
 
@@ -763,6 +760,8 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
               </div>
 
             </div>
+
+          </div>
 
           </div>
         </div>
