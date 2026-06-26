@@ -132,7 +132,7 @@ export default function LandingPage() {
     if (isLogin) {
       const success = login(email, password);
       if (!success) {
-        setError("Invalid credentials. Try 'Seiminiyifafranklin@gmail.com' with password 'password' for testing, or create a new account.");
+        setError("Invalid credentials. Please verify your email and password, or create a new corporate account.");
       } else {
         setSuccessMsg("Success! Accessing your tax portal...");
       }
@@ -272,9 +272,9 @@ export default function LandingPage() {
           </p>
 
           {/* Value tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto lg:mx-0 pt-2 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto lg:mx-0 pt-2 text-center lg:text-left">
             {(portalSettings.benefits || []).map((benefit, bIdx) => (
-              <div key={bIdx} className="flex items-center gap-2 text-sm sm:text-base font-semibold text-slate-700">
+              <div key={bIdx} className="flex items-center justify-center lg:justify-start gap-2 text-sm sm:text-base font-semibold text-slate-700">
                 <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
                 <span>{benefit}</span>
               </div>

@@ -142,14 +142,60 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
           windowWidth: 794,
           windowHeight: 1123,
           onclone: (clonedDoc) => {
-            const el = clonedDoc.getElementById("printable-area");
-            if (el) {
-              el.style.transform = "none";
-              el.style.position = "relative";
-              el.style.left = "0";
-              el.style.top = "0";
-              el.style.margin = "0";
-              el.style.display = "flex";
+            try {
+              // 1. Process style tags to strip oklch declarations
+              const styleTags = clonedDoc.querySelectorAll("style");
+              styleTags.forEach((style) => {
+                if (style.innerHTML && style.innerHTML.includes("oklch")) {
+                  style.innerHTML = style.innerHTML.replace(/oklch\([^)]+\)/g, "#334155");
+                }
+              });
+
+              // 2. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
+              for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
+                try {
+                  const sheet = clonedDoc.styleSheets[i];
+                  if (!sheet) continue;
+                  const rules = sheet.cssRules || sheet.rules;
+                  if (!rules) continue;
+                  for (let j = rules.length - 1; j >= 0; j--) {
+                    const rule = rules[j];
+                    if (rule && rule.cssText && rule.cssText.includes("oklch")) {
+                      sheet.deleteRule(j);
+                    }
+                  }
+                } catch (e) {
+                  // Ignore stylesheet reading errors
+                }
+              }
+
+              const el = clonedDoc.getElementById("printable-area");
+              if (el) {
+                el.style.transform = "none";
+                el.style.position = "relative";
+                el.style.left = "0";
+                el.style.top = "0";
+                el.style.margin = "0";
+                el.style.display = "flex";
+
+                // Force standard colors on elements to prevent rendering issues due to stripped stylesheets
+                const elements = el.querySelectorAll("*");
+                elements.forEach((node) => {
+                  const htmlNode = node as HTMLElement;
+                  if (htmlNode.className) {
+                    if (htmlNode.className.includes("text-slate-900")) htmlNode.style.color = "#0f172a";
+                    if (htmlNode.className.includes("text-slate-950")) htmlNode.style.color = "#030712";
+                    if (htmlNode.className.includes("text-slate-800")) htmlNode.style.color = "#1e293b";
+                    if (htmlNode.className.includes("text-slate-700")) htmlNode.style.color = "#334155";
+                    if (htmlNode.className.includes("text-slate-600")) htmlNode.style.color = "#475569";
+                    if (htmlNode.className.includes("text-slate-500")) htmlNode.style.color = "#64748b";
+                    if (htmlNode.className.includes("border-slate-200")) htmlNode.style.borderColor = "#e2e8f0";
+                    if (htmlNode.className.includes("border-slate-300")) htmlNode.style.borderColor = "#cbd5e1";
+                  }
+                });
+              }
+            } catch (err) {
+              console.error("onclone oklch cleanup failed:", err);
             }
           }
         });
@@ -167,14 +213,60 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
           windowWidth: 794,
           windowHeight: 1123,
           onclone: (clonedDoc) => {
-            const el = clonedDoc.getElementById("printable-area");
-            if (el) {
-              el.style.transform = "none";
-              el.style.position = "relative";
-              el.style.left = "0";
-              el.style.top = "0";
-              el.style.margin = "0";
-              el.style.display = "flex";
+            try {
+              // 1. Process style tags to strip oklch declarations
+              const styleTags = clonedDoc.querySelectorAll("style");
+              styleTags.forEach((style) => {
+                if (style.innerHTML && style.innerHTML.includes("oklch")) {
+                  style.innerHTML = style.innerHTML.replace(/oklch\([^)]+\)/g, "#334155");
+                }
+              });
+
+              // 2. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
+              for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
+                try {
+                  const sheet = clonedDoc.styleSheets[i];
+                  if (!sheet) continue;
+                  const rules = sheet.cssRules || sheet.rules;
+                  if (!rules) continue;
+                  for (let j = rules.length - 1; j >= 0; j--) {
+                    const rule = rules[j];
+                    if (rule && rule.cssText && rule.cssText.includes("oklch")) {
+                      sheet.deleteRule(j);
+                    }
+                  }
+                } catch (e) {
+                  // Ignore stylesheet reading errors
+                }
+              }
+
+              const el = clonedDoc.getElementById("printable-area");
+              if (el) {
+                el.style.transform = "none";
+                el.style.position = "relative";
+                el.style.left = "0";
+                el.style.top = "0";
+                el.style.margin = "0";
+                el.style.display = "flex";
+
+                // Force standard colors on elements to prevent rendering issues due to stripped stylesheets
+                const elements = el.querySelectorAll("*");
+                elements.forEach((node) => {
+                  const htmlNode = node as HTMLElement;
+                  if (htmlNode.className) {
+                    if (htmlNode.className.includes("text-slate-900")) htmlNode.style.color = "#0f172a";
+                    if (htmlNode.className.includes("text-slate-950")) htmlNode.style.color = "#030712";
+                    if (htmlNode.className.includes("text-slate-800")) htmlNode.style.color = "#1e293b";
+                    if (htmlNode.className.includes("text-slate-700")) htmlNode.style.color = "#334155";
+                    if (htmlNode.className.includes("text-slate-600")) htmlNode.style.color = "#475569";
+                    if (htmlNode.className.includes("text-slate-500")) htmlNode.style.color = "#64748b";
+                    if (htmlNode.className.includes("border-slate-200")) htmlNode.style.borderColor = "#e2e8f0";
+                    if (htmlNode.className.includes("border-slate-300")) htmlNode.style.borderColor = "#cbd5e1";
+                  }
+                });
+              }
+            } catch (err) {
+              console.error("onclone oklch cleanup failed:", err);
             }
           }
         });
