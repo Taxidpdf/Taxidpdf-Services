@@ -17,6 +17,7 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
   const [businessAddress, setBusinessAddress] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [progressMessage, setProgressMessage] = useState("");
+  const [consented, setConsented] = useState(false);
 
   const validate = () => {
     const tempErrors: Record<string, string> = {};
@@ -28,6 +29,7 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
       tempErrors.taxId = "Please enter a valid 8 to 15 digit Tax ID.";
     }
     if (!businessAddress.trim()) tempErrors.businessAddress = "Business Address is required.";
+    if (!consented) tempErrors.consented = "You must provide consent to proceed.";
     
     setErrors(tempErrors);
     return Object.keys(tempErrors).length === 0;
@@ -253,6 +255,36 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
           )}
         </div>
 
+        {/* Consent Checkbox */}
+        <div className="pt-1">
+          <label className="flex items-start gap-3 cursor-pointer group select-none">
+            <input
+              type="checkbox"
+              id="consent-checkbox"
+              checked={consented}
+              onChange={(e) => {
+                setConsented(e.target.checked);
+                if (errors.consented) setErrors((prev) => {
+                  const updated = { ...prev };
+                  delete updated.consented;
+                  return updated;
+                });
+              }}
+              disabled={loading}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 accent-emerald-600 cursor-pointer disabled:opacity-50 transition"
+            />
+            <span className="text-xs text-slate-600 leading-relaxed group-hover:text-slate-800 transition-colors">
+              I consent that the information I have provided is gotten exactly as seen on the CAC status report, certificate and the official NRS site for generating the TIN number.
+            </span>
+          </label>
+          {errors.consented && (
+            <div className="mt-1.5 flex items-center gap-1 text-xs text-red-600">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{errors.consented}</span>
+            </div>
+          )}
+        </div>
+
         {/* Security assurance badge */}
         <div className="bg-emerald-50/30 rounded-xl p-4 border border-emerald-100/30 flex items-start gap-2.5">
           <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
@@ -265,8 +297,8 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
         <div className="pt-2">
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-4 bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            disabled={loading || !consented}
+            className="w-full py-4 bg-emerald-600 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-200 hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

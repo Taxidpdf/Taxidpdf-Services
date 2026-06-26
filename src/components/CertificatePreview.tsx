@@ -327,26 +327,34 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
   return (
     <div className="space-y-6" id="certificate-preview-container">
       {/* Printable Style Injector */}
-      <style>{`
+       <style>{`
         @media print {
+          html, body {
+            width: 210mm;
+            height: 297mm;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
           body * {
             visibility: hidden;
-            background-color: #ffffff !important;
           }
           #printable-area, #printable-area * {
             visibility: visible;
           }
           #printable-area {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100% !important;
-            max-width: 100% !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 210mm !important;
+            height: 297mm !important;
             margin: 0 !important;
             padding: 0 !important;
             border: none !important;
             box-shadow: none !important;
-            background: #ffffff !important;
+            background: #f8faf9 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           #print-controls, #print-controls-sidebar, #main-header, #main-footer, #faq-section, #taxpayer-news {
             display: none !important;
@@ -547,35 +555,65 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                 <div style={{ backgroundColor: "#ffffff", paddingLeft: "40px", paddingRight: "40px", paddingTop: "20px", paddingBottom: "20px", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                   
                   {/* JRB Logo on the Left */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", userSelect: "none" }}>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                      <span style={{ fontSize: "48px", fontWeight: "800", color: "#008248", letterSpacing: "-0.05em", lineHeight: "1", fontFamily: "Inter, sans-serif" }}>JRB</span>
-                      <div style={{ width: "10px" }} />
-                      <div style={{ display: "flex", flexDirection: "column", color: "#1e293b", fontSize: "10px", fontWeight: "800", lineHeight: "1.2", letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                        <span>Joint</span>
-                        <span>Revenue</span>
-                        <span>Board</span>
-                      </div>
-                    </div>
-                    <div style={{ width: "100%", borderTop: "1px solid #cbd5e1", marginTop: "4px", marginBottom: "4px" }} />
-                    <span style={{ fontSize: "8px", fontWeight: "700", color: "#64748b", letterSpacing: "0.05em" }}>Harmonize. Optimize. Trust.</span>
+                  <div style={{ userSelect: "none" }}>
+                    <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "170px" }}>
+                      <tbody>
+                        <tr>
+                          <td style={{ padding: 0, verticalAlign: "middle" }}>
+                            <span style={{ fontSize: "44px", fontWeight: "900", color: "#008248", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-2px", lineHeight: "1" }}>JRB</span>
+                          </td>
+                          <td style={{ paddingLeft: "8px", verticalAlign: "middle" }}>
+                            <div style={{ color: "#1e293b", fontSize: "10px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                              <div>JOINT</div>
+                              <div>REVENUE</div>
+                              <div>BOARD</div>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2} style={{ padding: 0, paddingTop: "4px", paddingBottom: "4px" }}>
+                            <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1" }} />
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2} style={{ padding: 0 }}>
+                            <span style={{ fontSize: "8px", fontWeight: "800", color: "#64748b", letterSpacing: "0.5px", fontFamily: "Arial, Helvetica, sans-serif" }}>Harmonize. Optimize. Trust.</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
 
                   {/* NRS Logo on the Right */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", userSelect: "none" }}>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                      <span style={{ fontSize: "48px", fontWeight: "900", color: "#56595e", letterSpacing: "-0.025em", lineHeight: "1", fontFamily: "Inter, sans-serif" }}>NRS</span>
-                      <div style={{ width: "10px" }} />
-                      <div style={{ display: "flex", flexDirection: "column", color: "#b12c1b", fontSize: "10px", fontWeight: "900", lineHeight: "1.1", letterSpacing: "0.05em", textAlign: "left", width: "115px" }}>
-                        <span>NIGERIA</span>
-                        <span>REVENUE</span>
-                        <span>SERVICE</span>
-                      </div>
-                    </div>
-                    <div style={{ display: "flex", flexDirection: "row", width: "100%", height: "3px", marginTop: "8px" }}>
-                      <div style={{ flex: 1, height: "100%", backgroundColor: "#56595e" }} />
-                      <div style={{ width: "115px", height: "100%", backgroundColor: "#b12c1b" }} />
-                    </div>
+                  <div style={{ userSelect: "none" }}>
+                    <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "170px" }}>
+                      <tbody>
+                        <tr>
+                          <td style={{ padding: 0, verticalAlign: "middle" }}>
+                            <span style={{ fontSize: "44px", fontWeight: "900", color: "#56595e", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-1px", lineHeight: "1" }}>NRS</span>
+                          </td>
+                          <td style={{ paddingLeft: "8px", verticalAlign: "middle" }}>
+                            <div style={{ color: "#b12c1b", fontSize: "10px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                              <div>NIGERIA</div>
+                              <div>REVENUE</div>
+                              <div>SERVICE</div>
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={2} style={{ padding: 0, paddingTop: "8px" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", border: "none", padding: 0, margin: 0 }}>
+                              <tbody>
+                                <tr>
+                                  <td style={{ width: "55px", height: "3px", backgroundColor: "#56595e", padding: 0 }}></td>
+                                  <td style={{ height: "3px", backgroundColor: "#b12c1b", padding: 0 }}></td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
 
                 </div>

@@ -654,7 +654,7 @@ export default function LandingPage() {
                 return <Clock className="w-6 h-6" />;
               };
               return (
-                <div key={fIdx} className="bg-slate-50 rounded-3xl p-6 border border-slate-100 hover:shadow-lg transition">
+                <div key={fIdx} className="bg-slate-50 rounded-3xl p-6 border border-slate-100 hover:shadow-lg transition flex flex-col items-center text-center">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mb-5">
                     {getIcon(fIdx)}
                   </div>
