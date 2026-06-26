@@ -106,6 +106,14 @@ const DEFAULT_SETTINGS: PortalSettings = {
     {
       question: "Can I use the generated PDF slip for visa applications?",
       answer: "Yes. The generated PDF slip is fully formatted with your official details, National TIN, issuing authority, registration date, barcode, and QR verification code. It is identical to the official registration slip issued at the tax offices and is widely accepted by banks, foreign embassies, corporate registrars (CAC), and government agencies."
+    },
+    {
+      question: "DOES BANKS ACCEPT IT?",
+      answer: "Yes. Banks that previously accepted the old JTB TIN slip will also accept this new format. Our new JTB/NRS Slip for Non-Individual TIN is generated in PDF format, making it easy to print and present professionally. The information displayed on the slip contains verifiable details that align with the records available on the Tax-ID portal, giving financial institutions confidence in its authenticity."
+    },
+    {
+      question: "CAN I USE THE WEBSITE TO GENERATE AN INDIVIDUAL TIN?",
+      answer: "No. The website is designed specifically for generating Non-Individual TIN (Business Name, Company, and Incorporated Trustee) slips. It does not support Individual TIN generation."
     }
   ],
   features: [
@@ -217,6 +225,14 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           if (parsed.landingTitle === "Download your JTB TIN Slip instantly.") {
             parsed.landingTitle = "Download your JTB TIN Slip securely.";
           }
+          const defaultFaqs = DEFAULT_SETTINGS.faqs;
+          const mergedFaqs = [...(parsed.faqs || DEFAULT_SETTINGS.faqs)];
+          for (const df of defaultFaqs) {
+            if (!mergedFaqs.some(f => f.question.toLowerCase() === df.question.toLowerCase())) {
+              mergedFaqs.push(df);
+            }
+          }
+
           const mergedSettings: PortalSettings = {
             ...DEFAULT_SETTINGS,
             ...parsed,
@@ -224,7 +240,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             formDescription: parsed.formDescription || DEFAULT_SETTINGS.formDescription,
             footerDisclaimer: parsed.footerDisclaimer || DEFAULT_SETTINGS.footerDisclaimer,
             footerCopyrightText: parsed.footerCopyrightText || DEFAULT_SETTINGS.footerCopyrightText,
-            faqs: parsed.faqs || DEFAULT_SETTINGS.faqs,
+            faqs: mergedFaqs,
             features: parsed.features || DEFAULT_SETTINGS.features,
             newsList: parsed.newsList || DEFAULT_SETTINGS.newsList,
             benefits: parsed.benefits || DEFAULT_SETTINGS.benefits,
@@ -375,8 +391,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         // Fetch Settings from Supabase
         const dbSettings = await fetchPortalSettingsFromSupabase();
         if (dbSettings) {
+          const defaultFaqs = DEFAULT_SETTINGS.faqs;
+          const mergedFaqs = [...(dbSettings.faqs || DEFAULT_SETTINGS.faqs)];
+          let needsUpdate = false;
+          for (const df of defaultFaqs) {
+            if (!mergedFaqs.some(f => f.question.toLowerCase() === df.question.toLowerCase())) {
+              mergedFaqs.push(df);
+              needsUpdate = true;
+            }
+          }
+          dbSettings.faqs = mergedFaqs;
           setPortalSettings(dbSettings);
           localStorage.setItem(SETTINGS_KEY, JSON.stringify(dbSettings));
+          if (needsUpdate) {
+            await savePortalSettingsToSupabase(dbSettings).catch(e => console.warn("Error updating remote settings with new FAQs:", e));
+          }
         } else {
           // Seed settings to Supabase
           await savePortalSettingsToSupabase(DEFAULT_SETTINGS);

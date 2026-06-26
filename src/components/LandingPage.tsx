@@ -31,6 +31,13 @@ import {
 
 export function RotatingWord() {
   const words = ["instantly.", "securely.", "seamlessly.", "directly.", "easily."];
+  const colors = [
+    "#00B074", // elegant emerald green
+    "#F48120", // attention orange
+    "#521753", // attention deep violet/purple
+    "#2563EB", // royal blue
+    "#D946EF"  // magenta/fuchsia
+  ];
   const [index, setIndex] = useState(0);
 
   React.useEffect(() => {
@@ -41,10 +48,14 @@ export function RotatingWord() {
   }, []);
 
   const currentWord = words[index];
+  const currentColor = colors[index % colors.length];
   const characters = currentWord.split("");
 
   return (
-    <span className="inline-flex text-emerald-600 dark:text-emerald-500 font-black relative">
+    <span 
+      className="inline-flex font-black relative transition-colors duration-500"
+      style={{ color: currentColor }}
+    >
       {characters.map((char, i) => (
         <motion.span
           key={`${index}-${i}`}
@@ -283,7 +294,11 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
           
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
+          <div 
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition select-none"
+            title="Return to Home"
+          >
             <div className="w-10 h-10 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full shadow-sm rounded-xl">
                 {/* Shield background */}

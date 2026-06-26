@@ -1,5 +1,5 @@
 {
-  "name": "Tax ID to PDF",
+  "name": "Taxidpdf Portal",
   "description": "Convert your Joint Tax Board (JTB) or FIRS Tax Identification Number (TIN) into an official printable PDF certificate instantly.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

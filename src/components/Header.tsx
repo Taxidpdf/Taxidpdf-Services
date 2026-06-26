@@ -4,9 +4,10 @@ import { useUser } from "../context/UserContext";
 
 interface HeaderProps {
   onEnterAdmin?: () => void;
+  onLogoClick?: () => void;
 }
 
-export default function Header({ onEnterAdmin }: HeaderProps) {
+export default function Header({ onEnterAdmin, onLogoClick }: HeaderProps) {
   const { currentUser, logout } = useUser();
 
   const getInitials = (name: string) => {
@@ -32,7 +33,11 @@ export default function Header({ onEnterAdmin }: HeaderProps) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-5 flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
         {/* JTB Emblem & Brand */}
         <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-start">
-          <div className="flex items-center gap-3">
+          <div 
+            onClick={onLogoClick}
+            className="flex items-center gap-3 cursor-pointer hover:opacity-90 transition select-none"
+            title="Return to Home Dashboard"
+          >
             <div className="w-11 h-11 flex items-center justify-center shrink-0">
               <svg viewBox="0 0 100 100" className="w-full h-full shadow-sm rounded-xl">
                 {/* Shield background */}
