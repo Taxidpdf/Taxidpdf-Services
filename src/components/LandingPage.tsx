@@ -93,7 +93,7 @@ export function EstherRevealHeadline({ text }: { text: string }) {
 
   return (
     <motion.span 
-      className="inline-flex flex-wrap justify-center gap-x-2 md:gap-x-4 gap-y-1 md:gap-y-2.5 overflow-visible"
+      className="inline-flex flex-wrap justify-center gap-x-[15px] gap-y-2 overflow-visible"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -104,7 +104,7 @@ export function EstherRevealHeadline({ text }: { text: string }) {
         const isHighlighted = wordLower.includes("secure") || wordLower.includes("instant");
         
         return (
-          <span key={wordIdx} className="inline-block overflow-hidden py-0.5 md:py-1">
+          <span key={wordIdx} className="inline-block overflow-hidden py-1">
             {isTarget ? (
               <motion.span variants={wordVariants} className="inline-block">
                 <RotatingWord />
@@ -353,7 +353,7 @@ export default function LandingPage() {
       </nav>
 
       {/* 2. CENTRALIZED HIGH-IMPACT HERO AREA (ESTHER ADEBAYO FULL-PAGE VIEWPORT) */}
-      <section className="relative overflow-hidden min-h-0 md:min-h-[calc(100vh-76px)] px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center gap-6 md:gap-10 max-w-6xl mx-auto py-10 md:py-16 animate-fadeIn" id="hero-section">
+      <section className="relative overflow-hidden min-h-[calc(100vh-76px)] px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center gap-10 max-w-6xl mx-auto py-16 animate-fadeIn" id="hero-section">
         
         {/* Background glow effects with soft drift animation */}
         <motion.div 
@@ -371,13 +371,13 @@ export default function LandingPage() {
           initial={{ opacity: 0, y: -25 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/30 text-[10px] font-extrabold uppercase tracking-wider"
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/30 text-[10px] font-extrabold uppercase tracking-wider mb-2"
         >
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
           <span>Secure Joint Tax Board API Synced Gateway</span>
         </motion.div>
 
-        <h1 className="text-[34px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[84px] font-black text-slate-900 tracking-tighter leading-[1.1] md:leading-[1.02] font-sans max-w-5xl mx-auto" id="hero-title">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[84px] font-black text-slate-900 tracking-tighter leading-[1.02] font-sans max-w-5xl mx-auto" id="hero-title">
           <EstherRevealHeadline text={portalSettings.landingTitle || "Download your JTB TIN Slip securely."} />
         </h1>
 
