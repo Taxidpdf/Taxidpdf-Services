@@ -64,6 +64,70 @@ export function RotatingWord() {
   );
 }
 
+export function EstherRevealHeadline({ text }: { text: string }) {
+  const words = text.split(" ");
+  
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.09,
+        delayChildren: 0.15,
+      }
+    }
+  };
+
+  const wordVariants = {
+    hidden: { y: "115%", opacity: 0, filter: "blur(4px)" },
+    visible: {
+      y: 0,
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.9,
+        ease: [0.16, 1, 0.3, 1] // signature elastic expo-easeout for maximum luxury/smoothness
+      }
+    }
+  };
+
+  return (
+    <motion.span 
+      className="inline-flex flex-wrap justify-center gap-x-2 md:gap-x-4 gap-y-1 md:gap-y-2.5 overflow-visible"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+    >
+      {words.map((word, wordIdx) => {
+        const wordLower = word.toLowerCase();
+        const isTarget = wordLower.includes("securely") || wordLower.includes("instantly");
+        const isHighlighted = wordLower.includes("secure") || wordLower.includes("instant");
+        
+        return (
+          <span key={wordIdx} className="inline-block overflow-hidden py-0.5 md:py-1">
+            {isTarget ? (
+              <motion.span variants={wordVariants} className="inline-block">
+                <RotatingWord />
+              </motion.span>
+            ) : (
+              <motion.span
+                variants={wordVariants}
+                className={`inline-block font-black ${
+                  isHighlighted 
+                    ? "text-emerald-600 dark:text-emerald-500 relative after:absolute after:bottom-1 after:left-0 after:w-full after:h-2 after:bg-emerald-50 after:-z-10" 
+                    : "text-slate-900"
+                }`}
+              >
+                {word}
+              </motion.span>
+            )}
+          </span>
+        );
+      })}
+    </motion.span>
+  );
+}
+
 export default function LandingPage() {
   const { login, signup, users, portalSettings } = useUser();
   const [isLogin, setIsLogin] = useState(true);
@@ -288,146 +352,318 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* 2. DUAL-COLUMN HIGH-IMPACT HERO AREA */}
-      <section className="relative overflow-hidden pt-8 pb-16 md:py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center gap-12" id="hero-section">
+      {/* 2. CENTRALIZED HIGH-IMPACT HERO AREA (ESTHER ADEBAYO FULL-PAGE VIEWPORT) */}
+      <section className="relative overflow-hidden min-h-0 md:min-h-[calc(100vh-76px)] px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center text-center gap-6 md:gap-10 max-w-6xl mx-auto py-10 md:py-16 animate-fadeIn" id="hero-section">
         
-        {/* Background glow effects */}
-        <div className="absolute top-[10%] left-[-15%] w-[400px] h-[400px] bg-emerald-100/40 rounded-full blur-[100px] -z-10" />
-        <div className="absolute bottom-[20%] right-[-15%] w-[450px] h-[450px] bg-blue-100/40 rounded-full blur-[100px] -z-10" />
+        {/* Background glow effects with soft drift animation */}
+        <motion.div 
+          animate={{ scale: [1, 1.1, 1], x: [0, 15, 0], y: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 8, ease: "easeInOut" }}
+          className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[550px] h-[550px] bg-emerald-100/25 rounded-full blur-[130px] -z-10" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], x: [0, -20, 0], y: [0, 15, 0] }}
+          transition={{ repeat: Infinity, duration: 10, ease: "easeInOut" }}
+          className="absolute bottom-[10%] left-1/3 -translate-x-1/2 w-[450px] h-[450px] bg-blue-100/25 rounded-full blur-[130px] -z-10" 
+        />
 
-        {/* Hero Left Copy */}
-        <div className="flex-1 space-y-6 text-center lg:text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/30 text-[10px] font-extrabold uppercase tracking-wider mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Secure Joint Tax Board API Synced Gateway</span>
-          </div>
-
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black text-slate-900 tracking-tighter leading-[1.02] font-sans" id="hero-title">
-            {(() => {
-              const title = portalSettings.landingTitle || "Download your JTB TIN Slip instantly.";
-              const lowerTitle = title.toLowerCase();
-              const target = "instantly";
-              if (lowerTitle.includes(target)) {
-                const idx = lowerTitle.indexOf(target);
-                const mainText = title.substring(0, idx);
-                return (
-                  <>
-                    {mainText}
-                    <RotatingWord />
-                  </>
-                );
-              }
-              return title;
-            })()}
-          </h1>
-
-          <p className="text-slate-600 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0">
-            {portalSettings.landingDescription}
-          </p>
-
-          {/* Value tags */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto lg:mx-0 pt-2 text-center lg:text-left">
-            {(portalSettings.benefits || []).map((benefit, bIdx) => (
-              <div key={bIdx} className="flex items-center justify-center lg:justify-start gap-2 text-sm sm:text-base font-semibold text-slate-700">
-                <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
-                <span>{benefit}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-            <button
-              onClick={() => handleScrollToAuth(false)}
-              className="w-full sm:w-auto px-9 py-5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-2 group"
-            >
-              <span>Get Started Free</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
-            </button>
-            <a
-              href="#pricing"
-              className="w-full sm:w-auto text-center px-9 py-5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-sm uppercase tracking-wider rounded-2xl transition cursor-pointer"
-            >
-              View Gateway Tariffs
-            </a>
-          </div>
-
-          {/* High-fidelity corporate proof indicators */}
-          <div className="pt-6 border-t border-slate-200/60 max-w-lg mx-auto lg:mx-0">
-            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold mb-3">TRUSTED BY 5,000+ ACCOUNTANTS & CORPORATIONS NATIONWIDE</p>
-            <div className="flex flex-wrap justify-center lg:justify-start gap-x-6 gap-y-2 text-slate-400 font-black text-sm tracking-wider font-mono">
-              <span className="flex items-center gap-1.5"><Building className="w-4 h-4" /> NRS-REP</span>
-              <span className="flex items-center gap-1.5"><Database className="w-4 h-4" /> JTB-CORE</span>
-              <span className="flex items-center gap-1.5"><ShieldCheck className="w-4 h-4" /> SSL-SECURE</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Hero Right: THE INTERACTIVE AUTHENTICATION PANEL */}
-        <div 
-          ref={authSectionRef}
-          className="w-full max-w-md bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/70 shadow-2xl shadow-slate-200/60 relative overflow-hidden transition-all duration-300" 
-          id="auth-panel"
+        <motion.div 
+          initial={{ opacity: 0, y: -25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.75, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-100/30 text-[10px] font-extrabold uppercase tracking-wider"
         >
-          {/* Top banner tag */}
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-600" />
-          
-          <div className="text-center">
-            {isForgotPassword ? (
-              <>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-extrabold uppercase tracking-wider mb-4 border border-amber-100">
-                  <Lock className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Security Recovery</span>
-                </div>
-                
-                <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
-                  {forgotStep === 1 && "Recover Account"}
-                  {forgotStep === 2 && "Security OTP Code"}
-                  {forgotStep === 3 && "Reset Password"}
-                </h2>
-                <p className="mt-2 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                  {forgotStep === 1 && "Enter your registered email address to verify your credentials and generate a secure reset code."}
-                  {forgotStep === 2 && "We have simulated an OTP transmission to your email. Enter the code shown below."}
-                  {forgotStep === 3 && "Setup a secure, strong password for your corporate tax identifier portal."}
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wider mb-4">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Unified Gateway Auth</span>
-                </div>
-                
-                <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
-                  {isLogin ? "Welcome Back to Portal" : "Create Gateway Account"}
-                </h2>
-                <p className="mt-2 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-                  {isLogin 
-                    ? "Access your TIN retrieval dashboard, track saved slips, configure custom billing settings, and fund your wallet account." 
-                    : "Unlock an instant 24-hour trial with absolutely unlimited free compiled PDF downloads."}
-                </p>
-              </>
-            )}
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
+          <span>Secure Joint Tax Board API Synced Gateway</span>
+        </motion.div>
+
+        <h1 className="text-[34px] xs:text-4xl sm:text-6xl md:text-7xl lg:text-[84px] font-black text-slate-900 tracking-tighter leading-[1.1] md:leading-[1.02] font-sans max-w-5xl mx-auto" id="hero-title">
+          <EstherRevealHeadline text={portalSettings.landingTitle || "Download your JTB TIN Slip securely."} />
+        </h1>
+
+        {/* Centralized benefits & description section */}
+        <motion.p 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, delay: 0.55, ease: "easeOut" }}
+          className="text-slate-600 text-lg sm:text-xl leading-relaxed max-w-3xl mx-auto font-medium"
+        >
+          {portalSettings.landingDescription}
+        </motion.p>
+
+        {/* Dynamic centered benefits cards */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, delay: 0.75, ease: "easeOut" }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl w-full mx-auto pt-4 text-left"
+        >
+          {(portalSettings.benefits || []).map((benefit, bIdx) => (
+            <div key={bIdx} className="flex items-center gap-3 text-sm font-bold text-slate-700 bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm hover:shadow-md transition-all justify-center">
+              <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+              <span>{benefit}</span>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Call to action buttons */}
+        <motion.div 
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.85, delay: 0.95, ease: "easeOut" }}
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6 w-full sm:w-auto"
+        >
+          <button
+            onClick={() => handleScrollToAuth(false)}
+            className="w-full sm:w-auto px-9 py-5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-2 group"
+          >
+            <span>Get Started Free</span>
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+          </button>
+          <a
+            href="#pricing"
+            className="w-full sm:w-auto text-center px-9 py-5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-sm uppercase tracking-wider rounded-2xl transition cursor-pointer"
+          >
+            View Gateway Tariffs
+          </a>
+        </motion.div>
+
+        {/* High-fidelity corporate proof indicators */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.85 }}
+          transition={{ duration: 1.2, delay: 1.15 }}
+          className="pt-8 border-t border-slate-200/60 w-full max-w-lg mx-auto"
+        >
+          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold mb-4">TRUSTED BY 5,000+ ACCOUNTANTS & CORPORATIONS NATIONWIDE</p>
+          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-slate-400 font-black text-xs tracking-wider font-mono">
+            <span className="flex items-center gap-2"><Building className="w-4 h-4 text-slate-400" /> NRS-REP</span>
+            <span className="flex items-center gap-2"><Database className="w-4 h-4 text-slate-400" /> JTB-CORE</span>
+            <span className="flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-slate-400" /> SSL-SECURE</span>
           </div>
+        </motion.div>
 
-          {/* Success / Error Messages */}
-          {error && (
-            <div className="mt-6 bg-red-50 text-red-700 p-4 rounded-xl text-xs font-semibold leading-relaxed border border-red-100/80 flex items-start gap-2 animate-shake animate-duration-200">
-              <span className="w-4 h-4 rounded-full bg-red-600 flex items-center justify-center text-white font-bold shrink-0 text-[10px]">!</span>
-              <span>{error}</span>
+        {/* Animated bounce scroll arrow indicative of portfolio websites */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.4, duration: 0.8 }}
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 cursor-pointer z-20"
+          onClick={() => {
+            const el = document.getElementById("auth-section");
+            if (el) el.scrollIntoView({ behavior: "smooth" });
+          }}
+        >
+          <span className="text-[9px] font-extrabold text-slate-400 tracking-widest uppercase font-mono">ACCESS PORTAL</span>
+          <motion.div 
+            animate={{ y: [0, 6, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            className="w-5 h-8 border-2 border-slate-300 rounded-full flex justify-center p-1"
+          >
+            <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+          </motion.div>
+        </motion.div>
+
+      </section>
+
+      {/* 2.5 ACCESS THE GATEWAY PORTAL */}
+      <section className="bg-slate-50 border-y border-slate-200/50 py-20 flex justify-center" id="auth-section">
+        <div className="max-w-md w-full px-4" ref={authSectionRef}>
+          <div 
+            className="bg-white p-8 sm:p-10 rounded-3xl border border-slate-200/70 shadow-2xl shadow-slate-200/60 relative overflow-hidden transition-all duration-300" 
+            id="auth-panel"
+          >
+            {/* Top banner tag */}
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-emerald-600" />
+            
+            <div className="text-center">
+              {isForgotPassword ? (
+                <>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-[10px] font-extrabold uppercase tracking-wider mb-4 border border-amber-100">
+                    <Lock className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Security Recovery</span>
+                  </div>
+                  
+                  <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
+                    {forgotStep === 1 && "Recover Account"}
+                    {forgotStep === 2 && "Security OTP Code"}
+                    {forgotStep === 3 && "Reset Password"}
+                  </h2>
+                  <p className="mt-2 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                    {forgotStep === 1 && "Enter your registered email address to verify your credentials and generate a secure reset code."}
+                    {forgotStep === 2 && "We have simulated an OTP transmission to your email. Enter the code shown below."}
+                    {forgotStep === 3 && "Setup a secure, strong password for your corporate tax identifier portal."}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-extrabold uppercase tracking-wider mb-4">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Unified Gateway Auth</span>
+                  </div>
+                  
+                  <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight font-sans">
+                    {isLogin ? "Welcome Back to Portal" : "Create Gateway Account"}
+                  </h2>
+                  <p className="mt-2 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                    {isLogin 
+                      ? "Access your TIN retrieval dashboard, track saved slips, configure custom billing settings, and fund your wallet account." 
+                      : "Unlock an instant 24-hour trial with absolutely unlimited free compiled PDF downloads."}
+                  </p>
+                </>
+              )}
             </div>
-          )}
 
-          {successMsg && (
-            <div className="mt-6 bg-emerald-50 text-emerald-700 p-4 rounded-xl text-xs font-semibold leading-relaxed border border-emerald-100 flex items-start gap-2">
-              <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <span>{successMsg}</span>
-            </div>
-          )}
+            {/* Success / Error Messages */}
+            {error && (
+              <div className="mt-6 bg-red-50 text-red-700 p-4 rounded-xl text-xs font-semibold leading-relaxed border border-red-100/80 flex items-start gap-2 animate-shake animate-duration-200">
+                <span className="w-4 h-4 rounded-full bg-red-600 flex items-center justify-center text-white font-bold shrink-0 text-[10px]">!</span>
+                <span>{error}</span>
+              </div>
+            )}
 
-          {/* Form */}
-          {isForgotPassword ? (
-            <form className="mt-6 space-y-4" onSubmit={handleForgotPasswordSubmit}>
-              {forgotStep === 1 && (
+            {successMsg && (
+              <div className="mt-6 bg-emerald-50 text-emerald-700 p-4 rounded-xl text-xs font-semibold leading-relaxed border border-emerald-100 flex items-start gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            {isForgotPassword ? (
+              <form className="mt-6 space-y-4" onSubmit={handleForgotPasswordSubmit}>
+                {forgotStep === 1 && (
+                  <div>
+                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                      <Mail className="w-3.5 h-3.5 text-slate-400" />
+                      Corporate Email Address
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. tax@sterlingconsulting.ng"
+                      value={forgotEmail}
+                      onChange={(e) => setForgotEmail(e.target.value)}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                    />
+                  </div>
+                )}
+
+                {forgotStep === 2 && (
+                  <div className="space-y-4">
+                    <div className="bg-emerald-50 border border-emerald-100/80 rounded-xl p-4 text-xs">
+                      <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold mb-1.5">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                        <span>SIMULATED SECURITY OTP</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 leading-relaxed font-semibold">
+                        Your secure reset code is: <strong className="text-sm tracking-wider text-slate-900 bg-white px-2 py-0.5 rounded font-mono border border-emerald-200">{generatedCode}</strong>
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                        6-Digit Security Code
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={6}
+                        placeholder="e.g. 123456"
+                        value={forgotCodeInput}
+                        onChange={(e) => setForgotCodeInput(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold tracking-widest text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {forgotStep === 3 && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                        New Gateway Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                        Confirm New Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full mt-4 py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <span>
+                    {forgotStep === 1 && "GENERATE SECURITY CODE"}
+                    {forgotStep === 2 && "VERIFY SECURITY CODE"}
+                    {forgotStep === 3 && "SAVE NEW PASSWORD"}
+                  </span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+            ) : (
+              <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+                {!isLogin && (
+                  <div className="space-y-4 animate-fadeIn">
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                        <UserPlus className="w-3.5 h-3.5 text-slate-400" />
+                        Full Name / corporate organization name
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Sterling Consulting Ltd"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                        National Identification Number (11-Digit NIN)
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        maxLength={11}
+                        placeholder="e.g. 12345678901"
+                        value={nin}
+                        onChange={(e) => setNin(e.target.value.replace(/\D/g, ""))}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold tracking-widest text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all"
+                      />
+                      <p className="mt-1 text-[10px] text-emerald-600 font-bold tracking-wide uppercase flex items-center gap-1">
+                        <span>⚡ Automatically binds Moniepoint wallet on completion</span>
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-slate-400" />
@@ -437,249 +673,117 @@ export default function LandingPage() {
                     type="email"
                     required
                     placeholder="e.g. tax@sterlingconsulting.ng"
-                    value={forgotEmail}
-                    onChange={(e) => setForgotEmail(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
                   />
                 </div>
-              )}
 
-              {forgotStep === 2 && (
-                <div className="space-y-4">
-                  <div className="bg-emerald-50 border border-emerald-100/80 rounded-xl p-4 text-xs">
-                    <div className="flex items-center gap-1.5 text-emerald-800 font-extrabold mb-1.5">
-                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                      <span>SIMULATED SECURITY OTP</span>
+                <div>
+                  <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                    Access Password
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                  />
+                  {isLogin && (
+                    <div className="flex justify-end mt-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsForgotPassword(true);
+                          setForgotStep(1);
+                          setForgotEmail(email); // Preset if already typed
+                          setError("");
+                          setSuccessMsg("");
+                        }}
+                        className="text-[10px] font-extrabold text-slate-400 hover:text-emerald-600 transition tracking-wide uppercase"
+                      >
+                        Forgot password?
+                      </button>
                     </div>
-                    <p className="text-[11px] text-emerald-700 leading-relaxed font-semibold">
-                      Your secure reset code is: <strong className="text-sm tracking-wider text-slate-900 bg-white px-2 py-0.5 rounded font-mono border border-emerald-200">{generatedCode}</strong>
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-                      6-Digit Security Code
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={6}
-                      placeholder="e.g. 123456"
-                      value={forgotCodeInput}
-                      onChange={(e) => setForgotCodeInput(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold tracking-widest text-center focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                    />
-                  </div>
+                  )}
                 </div>
-              )}
 
-              {forgotStep === 3 && (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-                      New Gateway Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-                      Confirm New Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={confirmNewPassword}
-                      onChange={(e) => setConfirmNewPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                    />
-                  </div>
-                </div>
-              )}
+                {!isLogin && (
+                  <>
+                    <div>
+                      <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-slate-400" />
+                        Confirm Password
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
+                      />
+                    </div>
 
-              <button
-                type="submit"
-                className="w-full mt-4 py-3.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-amber-200 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>
-                  {forgotStep === 1 && "GENERATE SECURITY CODE"}
-                  {forgotStep === 2 && "VERIFY SECURITY CODE"}
-                  {forgotStep === 3 && "SAVE NEW PASSWORD"}
-                </span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-          ) : (
-            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-              {!isLogin && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                      <UserPlus className="w-3.5 h-3.5 text-slate-400" />
-                      Full Name / corporate organization name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Sterling Consulting Ltd"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                      National Identification Number (11-Digit NIN)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      maxLength={11}
-                      placeholder="e.g. 12345678901"
-                      value={nin}
-                      onChange={(e) => setNin(e.target.value.replace(/\D/g, ""))}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold tracking-widest text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all"
-                    />
-                    <p className="mt-1 text-[10px] text-emerald-600 font-bold tracking-wide uppercase flex items-center gap-1">
-                      <span>⚡ Automatically binds Moniepoint wallet on completion</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
-                  Corporate Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="e.g. tax@sterlingconsulting.ng"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-                  Access Password
-                </label>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                />
-                {isLogin && (
-                  <div className="flex justify-end mt-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsForgotPassword(true);
-                        setForgotStep(1);
-                        setForgotEmail(email); // Preset if already typed
-                        setError("");
-                        setSuccessMsg("");
-                      }}
-                      className="text-[10px] font-extrabold text-slate-400 hover:text-emerald-600 transition tracking-wide uppercase"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
+                    <div className="flex items-start gap-2.5 pt-2">
+                      <input
+                        type="checkbox"
+                        id="consent-checkbox"
+                        checked={consentGiven}
+                        onChange={(e) => setConsentGiven(e.target.checked)}
+                        className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 mt-0.5 cursor-pointer"
+                      />
+                      <label htmlFor="consent-checkbox" className="text-[11px] font-semibold text-slate-500 leading-snug cursor-pointer select-none">
+                        By signing up, you agree to the Terms of Service and hereby give my consent to share my personal data.
+                      </label>
+                    </div>
+                  </>
                 )}
-              </div>
 
-              {!isLogin && (
-                <>
-                  <div>
-                    <label className="block text-xs font-extrabold text-slate-400 uppercase mb-2 tracking-wide flex items-center gap-1.5">
-                      <KeyRound className="w-3.5 h-3.5 text-slate-400" />
-                      Confirm Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all text-slate-800"
-                    />
-                  </div>
-
-                  <div className="flex items-start gap-2.5 pt-2">
-                    <input
-                      type="checkbox"
-                      id="consent-checkbox"
-                      checked={consentGiven}
-                      onChange={(e) => setConsentGiven(e.target.checked)}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 mt-0.5 cursor-pointer"
-                    />
-                    <label htmlFor="consent-checkbox" className="text-[11px] font-semibold text-slate-500 leading-snug cursor-pointer select-none">
-                      By signing up, you agree to the Terms of Service and hereby give my consent to share my personal data.
-                    </label>
-                  </div>
-                </>
-              )}
-
-              <button
-                type="submit"
-                disabled={!isLogin && !consentGiven}
-                className="w-full mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
-                <span>{isLogin ? "LOG IN TO DASHBOARD" : "ACTIVATE 24-HOUR TRIAL"}</span>
-              </button>
-            </form>
-          )}
-
-
-
-          {/* Toggle state action */}
-          <div className="text-center pt-4 border-t border-slate-100 mt-4">
-            {isForgotPassword ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsForgotPassword(false);
-                  setIsLogin(true);
-                  setForgotStep(1);
-                  setError("");
-                  setSuccessMsg("");
-                }}
-                className="text-xs font-bold text-slate-600 hover:text-emerald-700 underline underline-offset-4 decoration-2 transition flex items-center justify-center gap-1.5 mx-auto"
-              >
-                <span>Back to Log In</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError("");
-                  setSuccessMsg("");
-                }}
-                className="text-xs font-bold text-slate-600 hover:text-emerald-700 underline underline-offset-4 decoration-2 transition"
-              >
-                {isLogin ? "Need a new corporate account? Sign up here" : "Already registered? Sign in here"}
-              </button>
+                <button
+                  type="submit"
+                  disabled={!isLogin && !consentGiven}
+                  className="w-full mt-4 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-200 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLogin ? <LogIn className="w-4 h-4" /> : <UserPlus className="w-4 h-4" />}
+                  <span>{isLogin ? "LOG IN TO DASHBOARD" : "ACTIVATE 24-HOUR TRIAL"}</span>
+                </button>
+              </form>
             )}
+
+            {/* Toggle state action */}
+            <div className="text-center pt-4 border-t border-slate-100 mt-4">
+              {isForgotPassword ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotPassword(false);
+                    setIsLogin(true);
+                    setForgotStep(1);
+                    setError("");
+                    setSuccessMsg("");
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-emerald-700 underline underline-offset-4 decoration-2 transition flex items-center justify-center gap-1.5 mx-auto"
+                >
+                  <span>Back to Log In</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setError("");
+                    setSuccessMsg("");
+                  }}
+                  className="text-xs font-bold text-slate-600 hover:text-emerald-700 underline underline-offset-4 decoration-2 transition"
+                >
+                  {isLogin ? "Need a new corporate account? Sign up here" : "Already registered? Sign in here"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </section>

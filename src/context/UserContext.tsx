@@ -65,7 +65,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   unlimitedFee: 10000,
   basicLimit: 5,
   premiumLimit: 50,
-  landingTitle: "Download your JTB TIN Slip instantly.",
+  landingTitle: "Download your JTB TIN Slip securely.",
   landingDescription: "Need a physical copy of your Tax Identification Number? Use our secure portal to query the Joint Tax Board (JTB) registers, format your particulars, and generate your high-quality PDF slip ready for printing.",
   disclaimerText: "Disclaimer: taxidpdf.com operates solely as a third-party helper wrapper facilitating official tax database queries. We do not issue corporate TIN registrations or represent state boards. All original ownership is preserved with the Nigeria Revenue Services (NRS) and the Joint Tax Board (JTB) of Nigeria. For profile rectifications, please approach authorized physical state board offices. This is an independent third-party website to make CAC agents and business owners generate JTB/NRS TIN slips as shown on the official website https://taxid.nrs.gov.ng/. We only work with the information available publicly on this website.",
   supportEmail: "support@taxidpf.com",
@@ -213,6 +213,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = JSON.parse(storedSettings);
         if (parsed && typeof parsed === "object") {
+          if (parsed.landingTitle === "Download your JTB TIN Slip instantly.") {
+            parsed.landingTitle = "Download your JTB TIN Slip securely.";
+          }
           const mergedSettings: PortalSettings = {
             ...DEFAULT_SETTINGS,
             ...parsed,
@@ -435,7 +438,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (err) {
-        console.error("Supabase initial load sync failed:", err);
+        console.warn("Supabase initial load sync failed (falling back to offline local storage):", err);
       }
     };
 
@@ -452,7 +455,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(SEED_USERS_KEY, JSON.stringify(updatedUsers));
 
     // Async push to Supabase
-    saveUserToSupabase(updatedUser).catch(err => console.error("Error saving user to Supabase:", err));
+    saveUserToSupabase(updatedUser).catch(err => console.warn("Error saving user to Supabase:", err));
   };
 
   const login = (email: string, password: string): boolean => {
@@ -822,7 +825,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const updateSettings = (settings: PortalSettings) => {
     setPortalSettings(settings);
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-    savePortalSettingsToSupabase(settings).catch(err => console.error("Error syncing settings to Supabase:", err));
+    savePortalSettingsToSupabase(settings).catch(err => console.warn("Error syncing settings to Supabase:", err));
   };
 
   // Manual Pending Topups Form & Approvals
@@ -845,7 +848,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(TOPUPS_KEY, JSON.stringify(updatedTopups));
 
     // Save topup to Supabase
-    savePendingTopupToSupabase(newPending).catch(err => console.error("Error saving topup to Supabase:", err));
+    savePendingTopupToSupabase(newPending).catch(err => console.warn("Error saving topup to Supabase:", err));
 
     // Add a pending transaction for user visibility
     const pendingTx: Transaction = {
@@ -878,7 +881,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!topupItem) return;
 
     // Sync topup approval state to Supabase
-    savePendingTopupToSupabase(topupItem).catch(err => console.error("Error updating topup status in Supabase:", err));
+    savePendingTopupToSupabase(topupItem).catch(err => console.warn("Error updating topup status in Supabase:", err));
 
     // Apply the credit to the target user
     const updatedUsers = users.map((user) => {
@@ -908,7 +911,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const updatedTargetUser = updatedUsers.find(u => u && u.id === topupItem.userId);
     if (updatedTargetUser) {
-      saveUserToSupabase(updatedTargetUser).catch(err => console.error("Error saving updated user after topup approval to Supabase:", err));
+      saveUserToSupabase(updatedTargetUser).catch(err => console.warn("Error saving updated user after topup approval to Supabase:", err));
     }
 
     // If the approved user is current logged in user, refresh their context
@@ -936,7 +939,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     if (!topupItem) return;
 
     // Sync topup rejection state to Supabase
-    savePendingTopupToSupabase(topupItem).catch(err => console.error("Error updating rejected topup in Supabase:", err));
+    savePendingTopupToSupabase(topupItem).catch(err => console.warn("Error updating rejected topup in Supabase:", err));
 
     // Remove the pending visualization for the target user
     const updatedUsers = users.map((user) => {
@@ -962,7 +965,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const updatedTargetUser = updatedUsers.find(u => u && u.id === topupItem.userId);
     if (updatedTargetUser) {
-      saveUserToSupabase(updatedTargetUser).catch(err => console.error("Error saving updated user after topup rejection to Supabase:", err));
+      saveUserToSupabase(updatedTargetUser).catch(err => console.warn("Error saving updated user after topup rejection to Supabase:", err));
     }
 
     if (currentUser && currentUser.id === topupItem.userId) {
@@ -982,7 +985,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     const targetUser = updatedUsers.find(u => u && u.id === userId);
     if (targetUser) {
-      saveUserToSupabase(targetUser).catch(err => console.error("Error updating user admin status in Supabase:", err));
+      saveUserToSupabase(targetUser).catch(err => console.warn("Error updating user admin status in Supabase:", err));
     }
 
     if (currentUser && currentUser.id === userId) {
@@ -996,7 +999,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const updatedUsers = users.filter((u) => u && u.id !== userId);
     setUsers(updatedUsers);
     localStorage.setItem(SEED_USERS_KEY, JSON.stringify(updatedUsers));
-    deleteUserFromSupabase(userId).catch(err => console.error("Error deleting user from Supabase:", err));
+    deleteUserFromSupabase(userId).catch(err => console.warn("Error deleting user from Supabase:", err));
   };
 
   // Support Chat Sessions
@@ -1035,7 +1038,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setSupportChats(updatedChats);
     localStorage.setItem(CHATS_KEY, JSON.stringify(updatedChats));
 
-    saveSupportChatToSupabase(updatedChat).catch(err => console.error("Error saving user chat to Supabase:", err));
+    saveSupportChatToSupabase(updatedChat).catch(err => console.warn("Error saving user chat to Supabase:", err));
 
     // If a human representative is NOT responding, trigger AI reply
     if (!activeChat.isRepResponding) {
@@ -1064,9 +1067,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setSupportChats(finalChats);
         localStorage.setItem(CHATS_KEY, JSON.stringify(finalChats));
 
-        saveSupportChatToSupabase(finalChat).catch(err => console.error("Error saving AI chat response to Supabase:", err));
+        saveSupportChatToSupabase(finalChat).catch(err => console.warn("Error saving AI chat response to Supabase:", err));
       } catch (err) {
-        console.error("AI support chat connection issue:", err);
+        console.warn("AI support chat connection issue:", err);
       }
     }
   };
@@ -1093,7 +1096,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     setSupportChats(updatedChats);
     localStorage.setItem(CHATS_KEY, JSON.stringify(updatedChats));
 
-    saveSupportChatToSupabase(updatedChat).catch(err => console.error("Error saving admin chat message to Supabase:", err));
+    saveSupportChatToSupabase(updatedChat).catch(err => console.warn("Error saving admin chat message to Supabase:", err));
   };
 
   const toggleChatRepStatus = (chatId: string, isRepResponding: boolean) => {
@@ -1109,7 +1112,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(CHATS_KEY, JSON.stringify(updatedChats));
 
     if (updatedChatObj) {
-      saveSupportChatToSupabase(updatedChatObj).catch(err => console.error("Error toggling chat status in Supabase:", err));
+      saveSupportChatToSupabase(updatedChatObj).catch(err => console.warn("Error toggling chat status in Supabase:", err));
     }
   };
 

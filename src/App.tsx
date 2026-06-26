@@ -178,11 +178,33 @@ export default function App() {
                       <div className="space-y-4">
                         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight font-sans" id="hero-title-inner">
                           {(() => {
-                            const title = portalSettings.landingTitle || "Download your JTB TIN Slip instantly.";
+                            const title = portalSettings.landingTitle || "Download your JTB TIN Slip securely.";
                             const lowerTitle = title.toLowerCase();
-                            const target = "instantly";
+                            const target = "securely.";
                             if (lowerTitle.includes(target)) {
                               const idx = lowerTitle.indexOf(target);
+                              const mainText = title.substring(0, idx);
+                              return (
+                                <>
+                                  {mainText}
+                                  <RotatingWord />
+                                </>
+                              );
+                            }
+                            const fallbackTarget = "instantly.";
+                            if (lowerTitle.includes(fallbackTarget)) {
+                              const idx = lowerTitle.indexOf(fallbackTarget);
+                              const mainText = title.substring(0, idx);
+                              return (
+                                <>
+                                  {mainText}
+                                  <RotatingWord />
+                                </>
+                              );
+                            }
+                            const fallbackTarget2 = "instantly";
+                            if (lowerTitle.includes(fallbackTarget2)) {
+                              const idx = lowerTitle.indexOf(fallbackTarget2);
                               const mainText = title.substring(0, idx);
                               return (
                                 <>

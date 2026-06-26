@@ -91,7 +91,7 @@ export async function fetchUsersFromSupabase(): Promise<User[] | null> {
       };
     });
   } catch (error) {
-    console.error("Error fetching users from Supabase:", error);
+    console.warn("Error fetching users from Supabase (using local backup):", error);
     return null;
   }
 }
@@ -150,7 +150,7 @@ export async function saveUserToSupabase(user: User): Promise<void> {
       if (sErr) throw sErr;
     }
   } catch (error) {
-    console.error("Error saving user to Supabase:", error);
+    console.warn("Error saving user to Supabase (using local backup):", error);
   }
 }
 
@@ -162,7 +162,7 @@ export async function deleteUserFromSupabase(userId: string): Promise<void> {
     const uuid = toUUID(userId);
     await supabase.from('profiles').delete().eq('id', uuid);
   } catch (error) {
-    console.error("Error deleting user from Supabase:", error);
+    console.warn("Error deleting user from Supabase (using local backup):", error);
   }
 }
 
@@ -201,7 +201,7 @@ export async function fetchPortalSettingsFromSupabase(): Promise<PortalSettings 
       benefits: Array.isArray(data.benefits) ? data.benefits : [],
     };
   } catch (error) {
-    console.error("Error fetching settings from Supabase:", error);
+    console.warn("Error fetching settings from Supabase (using local backup):", error);
     return null;
   }
 }
@@ -240,7 +240,7 @@ export async function savePortalSettingsToSupabase(settings: PortalSettings): Pr
     });
     if (error) throw error;
   } catch (error) {
-    console.error("Error saving portal settings to Supabase:", error);
+    console.warn("Error saving portal settings to Supabase (using local backup):", error);
   }
 }
 
@@ -267,7 +267,7 @@ export async function fetchPendingTopupsFromSupabase(): Promise<PendingTopup[] |
       status: t.status as 'pending' | 'approved' | 'rejected'
     }));
   } catch (error) {
-    console.error("Error fetching pending topups from Supabase:", error);
+    console.warn("Error fetching pending topups from Supabase (using local backup):", error);
     return null;
   }
 }
@@ -289,7 +289,7 @@ export async function savePendingTopupToSupabase(topup: PendingTopup): Promise<v
     });
     if (error) throw error;
   } catch (error) {
-    console.error("Error saving pending topup to Supabase:", error);
+    console.warn("Error saving pending topup to Supabase (using local backup):", error);
   }
 }
 
@@ -330,7 +330,7 @@ export async function fetchSupportChatsFromSupabase(): Promise<SupportChat[] | n
       };
     });
   } catch (error) {
-    console.error("Error fetching support chats from Supabase:", error);
+    console.warn("Error fetching support chats from Supabase (using local backup):", error);
     return null;
   }
 }
@@ -367,6 +367,6 @@ export async function saveSupportChatToSupabase(chat: SupportChat): Promise<void
       if (mErr) throw mErr;
     }
   } catch (error) {
-    console.error("Error saving support chat to Supabase:", error);
+    console.warn("Error saving support chat to Supabase (using local backup):", error);
   }
 }
