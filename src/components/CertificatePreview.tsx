@@ -548,8 +548,9 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                   
                   {/* JRB Logo on the Left */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", userSelect: "none" }}>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                       <span style={{ fontSize: "48px", fontWeight: "800", color: "#008248", letterSpacing: "-0.05em", lineHeight: "1", fontFamily: "Inter, sans-serif" }}>JRB</span>
+                      <div style={{ width: "10px" }} />
                       <div style={{ display: "flex", flexDirection: "column", color: "#1e293b", fontSize: "10px", fontWeight: "800", lineHeight: "1.2", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                         <span>Joint</span>
                         <span>Revenue</span>
@@ -562,16 +563,18 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
 
                   {/* NRS Logo on the Right */}
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", userSelect: "none" }}>
-                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                    <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                       <span style={{ fontSize: "48px", fontWeight: "900", color: "#56595e", letterSpacing: "-0.025em", lineHeight: "1", fontFamily: "Inter, sans-serif" }}>NRS</span>
-                      <div style={{ display: "flex", flexDirection: "column", color: "#b12c1b", fontSize: "10px", fontWeight: "900", lineHeight: "1", letterSpacing: "0.05em", textAlign: "left" }}>
+                      <div style={{ width: "10px" }} />
+                      <div style={{ display: "flex", flexDirection: "column", color: "#b12c1b", fontSize: "10px", fontWeight: "900", lineHeight: "1.1", letterSpacing: "0.05em", textAlign: "left", width: "115px" }}>
                         <span>NIGERIA</span>
                         <span>REVENUE</span>
                         <span>SERVICE</span>
                       </div>
                     </div>
-                    <div style={{ width: "100%", height: "3px", backgroundColor: "#56595e", marginTop: "8px", position: "relative" }}>
-                      <div style={{ position: "absolute", right: "16px", width: "32px", height: "100%", backgroundColor: "#b12c1b" }} />
+                    <div style={{ display: "flex", flexDirection: "row", width: "100%", height: "3px", marginTop: "8px" }}>
+                      <div style={{ flex: 1, height: "100%", backgroundColor: "#56595e" }} />
+                      <div style={{ width: "115px", height: "100%", backgroundColor: "#b12c1b" }} />
                     </div>
                   </div>
 
