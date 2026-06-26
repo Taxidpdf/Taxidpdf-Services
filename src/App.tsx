@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "motion/react";
 import Header from "./components/Header";
 import SearchForm from "./components/SearchForm";
 import CertificatePreview from "./components/CertificatePreview";
 import FAQ from "./components/FAQ";
 import TaxpayerNews from "./components/TaxpayerNews";
 import Footer from "./components/Footer";
-import LandingPage from "./components/LandingPage";
+import LandingPage, { RotatingWord } from "./components/LandingPage";
 import DashboardOverview from "./components/DashboardOverview";
 import WalletAndSubs from "./components/WalletAndSubs";
 import ProfileSettings from "./components/ProfileSettings";
@@ -175,8 +176,23 @@ export default function App() {
                       </div>
 
                       <div className="space-y-4">
-                        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight font-sans">
-                          {portalSettings.landingTitle || "Download your JTB TIN Slip instantly."}
+                        <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight font-sans" id="hero-title-inner">
+                          {(() => {
+                            const title = portalSettings.landingTitle || "Download your JTB TIN Slip instantly.";
+                            const lowerTitle = title.toLowerCase();
+                            const target = "instantly";
+                            if (lowerTitle.includes(target)) {
+                              const idx = lowerTitle.indexOf(target);
+                              const mainText = title.substring(0, idx);
+                              return (
+                                <>
+                                  {mainText}
+                                  <RotatingWord />
+                                </>
+                              );
+                            }
+                            return title;
+                          })()}
                         </h1>
                         <p className="text-base text-slate-600 leading-relaxed font-normal">
                           {portalSettings.landingDescription || "Need a physical copy of your Tax Identification Number? Use our secure portal to query the Joint Tax Board (JTB) registers, format your particulars, and generate your high-quality PDF slip ready for printing."}

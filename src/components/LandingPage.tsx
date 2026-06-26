@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { motion } from "motion/react";
 import { useUser } from "../context/UserContext";
 import { 
   ShieldCheck, 
@@ -25,6 +26,41 @@ import {
   Building,
   DollarSign
 } from "lucide-react";
+
+export function RotatingWord() {
+  const words = ["instantly.", "securely.", "seamlessly.", "directly.", "easily."];
+  const [index, setIndex] = useState(0);
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % words.length);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentWord = words[index];
+  const characters = currentWord.split("");
+
+  return (
+    <span className="inline-flex text-emerald-600 dark:text-emerald-500 font-black relative">
+      {characters.map((char, i) => (
+        <motion.span
+          key={`${index}-${i}`}
+          initial={{ opacity: 0, y: 12, filter: "blur(2px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ 
+            duration: 0.35, 
+            delay: i * 0.04,
+            ease: [0.215, 0.610, 0.355, 1.000]
+          }}
+          className="inline-block"
+        >
+          {char === " " ? "\u00A0" : char}
+        </motion.span>
+      ))}
+    </span>
+  );
+}
 
 export default function LandingPage() {
   const { login, signup, users, portalSettings } = useUser();
@@ -263,8 +299,23 @@ export default function LandingPage() {
             <span>Secure Joint Tax Board API Synced Gateway</span>
           </div>
 
-          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black text-slate-900 tracking-tighter leading-[1.02] font-sans">
-            {portalSettings.landingTitle}
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black text-slate-900 tracking-tighter leading-[1.02] font-sans" id="hero-title">
+            {(() => {
+              const title = portalSettings.landingTitle || "Download your JTB TIN Slip instantly.";
+              const lowerTitle = title.toLowerCase();
+              const target = "instantly";
+              if (lowerTitle.includes(target)) {
+                const idx = lowerTitle.indexOf(target);
+                const mainText = title.substring(0, idx);
+                return (
+                  <>
+                    {mainText}
+                    <RotatingWord />
+                  </>
+                );
+              }
+              return title;
+            })()}
           </h1>
 
           <p className="text-slate-600 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0">

@@ -1524,45 +1524,61 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <div style={{ backgroundColor: "#ffffff", paddingLeft: "40px", paddingRight: "40px", paddingTop: "20px", paddingBottom: "20px", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                           
                           {/* JRB Logo on the Left */}
-                          <div style={{ display: "flex", flexDirection: "column", width: "190px", userSelect: "none" }}>
-                            {/* Top Row with JRB and JOINT REVENUE BOARD */}
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-end", paddingBottom: "4px" }}>
-                              <span style={{ fontSize: "40px", fontWeight: "900", color: "#008248", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-1.5px", lineHeight: "0.85" }}>JRB</span>
-                              <div style={{ width: "8px" }} />
-                              <div style={{ display: "flex", flexDirection: "column", color: "#1e293b", fontSize: "9px", fontWeight: "900", lineHeight: "1.15", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase", paddingBottom: "1px" }}>
-                                <div>JOINT</div>
-                                <div>REVENUE</div>
-                                <div>BOARD</div>
-                              </div>
-                            </div>
-                            {/* Continuous Horizontal Line */}
-                            <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1" }} />
-                            {/* Slogan Row */}
-                            <div style={{ paddingTop: "4px" }}>
-                              <span style={{ fontSize: "8px", fontWeight: "800", color: "#64748b", letterSpacing: "0.3px", fontFamily: "Arial, Helvetica, sans-serif", display: "block" }}>Harmonize. Optimize. Trust.</span>
-                            </div>
+                          <div style={{ userSelect: "none" }}>
+                            <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
+                              <tbody>
+                                <tr>
+                                  <td style={{ padding: 0, verticalAlign: "bottom", width: "85px" }}>
+                                    <span style={{ fontSize: "40px", fontWeight: "900", color: "#008248", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-1.5px", lineHeight: "0.85", display: "block" }}>JRB</span>
+                                  </td>
+                                  <td style={{ paddingLeft: "8px", verticalAlign: "bottom", paddingBottom: "1px" }}>
+                                    <div style={{ color: "#1e293b", fontSize: "9px", fontWeight: "900", lineHeight: "1.15", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                                      <div>JOINT</div>
+                                      <div>REVENUE</div>
+                                      <div>BOARD</div>
+                                    </div>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td colSpan={2} style={{ padding: 0, paddingTop: "4px", paddingBottom: "4px" }}>
+                                    <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1" }} />
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td colSpan={2} style={{ padding: 0 }}>
+                                    <span style={{ fontSize: "8px", fontWeight: "800", color: "#64748b", letterSpacing: "0.3px", fontFamily: "Arial, Helvetica, sans-serif", display: "block" }}>Harmonize. Optimize. Trust.</span>
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
                           </div>
 
                           {/* NRS Logo on the Right */}
-                          <div style={{ display: "flex", flexDirection: "column", width: "190px", userSelect: "none" }}>
-                            {/* Top Row with NRS and NIGERIA REVENUE SERVICE */}
-                            <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-end", paddingBottom: "4px" }}>
-                              <div style={{ width: "90px", display: "flex", alignItems: "flex-end" }}>
-                                <span style={{ fontSize: "40px", fontWeight: "900", color: "#56595e", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-0.5px", lineHeight: "0.85" }}>NRS</span>
-                              </div>
-                              <div style={{ width: "100px", display: "flex", alignItems: "flex-end" }}>
-                                <div style={{ color: "#b12c1b", fontSize: "9px", fontWeight: "900", lineHeight: "1.15", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase", paddingBottom: "1px" }}>
-                                  <div>NIGERIA</div>
-                                  <div>REVENUE</div>
-                                  <div>SERVICE</div>
-                                </div>
-                              </div>
-                            </div>
-                            {/* Split Horizontal Line */}
-                            <div style={{ display: "flex", flexDirection: "row", width: "100%", height: "3px" }}>
-                              <div style={{ width: "90px", height: "3px", backgroundColor: "#56595e" }} />
-                              <div style={{ width: "100px", height: "3px", backgroundColor: "#b12c1b" }} />
-                            </div>
+                          <div style={{ userSelect: "none" }}>
+                            <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
+                              <tbody>
+                                <tr>
+                                  <td style={{ padding: 0, verticalAlign: "bottom", width: "90px" }}>
+                                    <span style={{ fontSize: "40px", fontWeight: "900", color: "#56595e", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-0.5px", lineHeight: "0.85", display: "block" }}>NRS</span>
+                                  </td>
+                                  <td style={{ paddingLeft: "8px", verticalAlign: "bottom", paddingBottom: "1px", width: "100px" }}>
+                                    <div style={{ color: "#b12c1b", fontSize: "9px", fontWeight: "900", lineHeight: "1.15", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                                      <div>NIGERIA</div>
+                                      <div>REVENUE</div>
+                                      <div>SERVICE</div>
+                                    </div>
+                                  </td>
+                                </tr>
+                                <tr>
+                                  <td style={{ padding: 0, paddingTop: "4px", width: "90px" }}>
+                                    <div style={{ height: "3px", backgroundColor: "#56595e" }} />
+                                  </td>
+                                  <td style={{ padding: 0, paddingTop: "4px", paddingLeft: "8px", width: "100px" }}>
+                                    <div style={{ height: "3px", backgroundColor: "#b12c1b" }} />
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
                           </div>
 
                         </div>
