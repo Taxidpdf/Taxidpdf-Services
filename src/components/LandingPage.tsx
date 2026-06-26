@@ -24,7 +24,9 @@ import {
   CheckCircle2, 
   Database,
   Building,
-  DollarSign
+  DollarSign,
+  X,
+  ShieldAlert
 } from "lucide-react";
 
 export function RotatingWord() {
@@ -75,6 +77,7 @@ export default function LandingPage() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [consentGiven, setConsentGiven] = useState(false);
+  const [activeInfoModal, setActiveInfoModal] = useState<"security" | "support" | "legal" | null>(null);
 
   // Forgot Password Workflow States
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -904,11 +907,11 @@ export default function LandingPage() {
               </p>
             </div>
             <div className="flex gap-4 text-xs font-bold text-slate-400">
-              <span className="hover:text-emerald-500 cursor-pointer">Security Ledger</span>
+              <button onClick={() => setActiveInfoModal("security")} className="hover:text-emerald-500 cursor-pointer bg-transparent border-none p-0 font-bold">Security Ledger</button>
               <span>•</span>
-              <span className="hover:text-emerald-500 cursor-pointer">Support Helpline</span>
+              <button onClick={() => setActiveInfoModal("support")} className="hover:text-emerald-500 cursor-pointer bg-transparent border-none p-0 font-bold">Support Helpline</button>
               <span>•</span>
-              <span className="hover:text-emerald-500 cursor-pointer">Legal Counsel</span>
+              <button onClick={() => setActiveInfoModal("legal")} className="hover:text-emerald-500 cursor-pointer bg-transparent border-none p-0 font-bold">Legal Counsel</button>
             </div>
           </div>
 
@@ -931,6 +934,162 @@ export default function LandingPage() {
 
         </div>
       </footer>
+
+      {/* Information Modals Overlay */}
+      {activeInfoModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-slate-900 border border-slate-800 text-slate-300 rounded-3xl max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-slate-800 bg-slate-950/40 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-950/60 border border-emerald-900/40 flex items-center justify-center text-emerald-400">
+                  {activeInfoModal === "security" && <Lock className="w-5 h-5" />}
+                  {activeInfoModal === "support" && <HelpCircle className="w-5 h-5" />}
+                  {activeInfoModal === "legal" && <ShieldAlert className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-white">
+                    {activeInfoModal === "security" && "Security Ledger"}
+                    {activeInfoModal === "support" && "Support Helpline"}
+                    {activeInfoModal === "legal" && "Legal Counsel"}
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    Official Reference & Guidelines
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveInfoModal(null)}
+                className="w-8 h-8 rounded-full hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs leading-relaxed max-h-[calc(80vh-140px)] scrollbar-thin scrollbar-thumb-slate-800">
+              {activeInfoModal === "security" && (
+                <>
+                  <div className="space-y-2 border-b border-slate-800/60 pb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      1. Cryptographic and Encryption Protocols
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      All connection requests and database traffic on this portal are fully protected by industry-standard 256-bit Secure Socket Layer (SSL/TLS) protocols. Password and user login states undergo rigorous, salted cryptographic hashing (using PBKDF2/SHA-256) at the database layer to secure account privacy.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 border-b border-slate-800/60 pb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      2. Ephemeral Data Queries (Cache-Free Pipeline)
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      Your business and taxpayer parameters (such as RC Registration Numbers or custom Business Names) are processed completely ephemerally. Records queried from official registries (including NRS or JTB portals) are formatted strictly in-memory during document compilation, and are never saved or cached permanently on intermediary server logs.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pb-2">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      3. Agent Transaction Auditing
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      For registered corporate agents, we maintain a secure, tamper-proof transaction ledger. Every top-up, portal credit issuance, and PDF retrieval event is assigned a unique system hash. This facilitates clear financial auditing and eliminates credit failure or double-spend incidents.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {activeInfoModal === "support" && (
+                <>
+                  <div className="space-y-2 border-b border-slate-800/60 pb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      1. Support Channels and Uptime
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      Our engineering and support team operates around the clock. We guarantee a response time of under 30 minutes for ticket inquiries submitted regarding top-up settlements, wallet balance updates, or document rendering issues.
+                    </p>
+                    <p className="text-slate-400 pl-3 font-semibold text-emerald-400">
+                      Primary Contact: {portalSettings.supportEmail}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 border-b border-slate-800/60 pb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      2. Escalation Procedure
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      If you experience any delay in automated portal services:
+                    </p>
+                    <ul className="list-disc pl-8 text-slate-400 space-y-1">
+                      <li><strong>Level 1 Support:</strong> Standard account verification, registration questions, or CAC search tips.</li>
+                      <li><strong>Level 2 Support:</strong> Urgent wallet top-ups or bank transfer verification issues requiring direct manual routing audit.</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-2 pb-2">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      3. Troubleshooting Common Retrieval Delays
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      Most delays occur due to upstream government registry gateway maintenance. If your lookup returns an error, wait a few minutes, ensure your company name corresponds precisely to your CAC Certificate, and retry.
+                    </p>
+                  </div>
+                </>
+              )}
+
+              {activeInfoModal === "legal" && (
+                <>
+                  <div className="space-y-2 border-b border-slate-800/60 pb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      1. Legislative Authority & FOI Act Compliance
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      This digital helper portal functions in strict compliance with the provisions of Section 1 & Section 3 of the Nigerian Freedom of Information (FOI) Act, which empowers citizens, corporate agents, and legal practitioners to access and retrieve public record directories maintained by state boards.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 border-b border-slate-800/60 pb-4">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      2. Independent Third-Party Status
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      TaxIDPDF is an independent, non-governmental document layout helper. We are not officially affiliated with, endorsed by, or in partnership with the Corporate Affairs Commission (CAC), the Joint Tax Board (JTB) of Nigeria, or the Nigeria Revenue Services (NRS). All product names, logos, acronyms, and registered trademarks remain the properties of their respective statutory bodies.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 pb-2">
+                    <h4 className="text-sm font-bold text-white flex items-center gap-1.5">
+                      <span className="w-1.5 h-3 bg-emerald-500 rounded-full" />
+                      3. Limitations of Administrative Liabilities
+                    </h4>
+                    <p className="text-slate-400 pl-3">
+                      Slips generated on our website are formatted representations of publicly available data. We do not register new taxpayers or alter official governmental databases. If any details (such as address or spelling) on your retrieved profile are inaccurate, please consult an authorized physical state board office for official record updates.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex justify-end shrink-0">
+              <button
+                onClick={() => setActiveInfoModal(null)}
+                className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-widest rounded-xl transition cursor-pointer"
+              >
+                Accept & Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
