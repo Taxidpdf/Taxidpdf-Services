@@ -10,7 +10,11 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
 // Helper to check if a valid API key exists
 function getGeminiClient(): GoogleGenAI | null {
@@ -417,6 +421,21 @@ app.get("/api/monnify/verify-payment/:reference", async (req, res) => {
   }
 });
 
+// Endpoint 2.5: Get Monnify Configuration mode
+app.get("/api/monnify/config", (req, res) => {
+  try {
+    const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
+    const isTestMode = baseUrl.includes("sandbox") || (process.env.MONNIFY_API_KEY || "").startsWith("MK_TEST");
+    return res.json({
+      success: true,
+      isTestMode,
+      baseUrl
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Endpoint 3: Reserve Dedicated Virtual Account dynamically
 app.post("/api/monnify/reserve-account", async (req, res) => {
   try {
@@ -489,13 +508,18 @@ app.post("/api/monnify/webhook", async (req, res) => {
       return res.status(400).send("No signature header provided");
     }
 
-    // Compute HMAC SHA256 of request body to ensure webhook is authentic
-    const rawBody = JSON.stringify(req.body);
-    const computedHash = crypto.createHmac("sha256", secretKey).update(rawBody).digest("hex");
+    // Compute HMAC SHA512 and SHA256 of request body to ensure webhook is authentic
+    // Monnify standard is SHA512 on the raw string body.
+    const rawBody = (req as any).rawBody 
+      ? (req as any).rawBody.toString("utf8") 
+      : JSON.stringify(req.body);
+
+    const computedHash512 = crypto.createHmac("sha512", secretKey).update(rawBody).digest("hex");
+    const computedHash256 = crypto.createHmac("sha256", secretKey).update(rawBody).digest("hex");
 
     // Only bypass signature verify if in local/development environment OR signature is verified
     const isLocal = process.env.NODE_ENV !== "production";
-    const isSignatureValid = computedHash === signature;
+    const isSignatureValid = (signature === computedHash512) || (signature === computedHash256);
 
     if (isLocal || isSignatureValid) {
       console.log("[Webhook] Authentic Monnify webhook validated successfully.");

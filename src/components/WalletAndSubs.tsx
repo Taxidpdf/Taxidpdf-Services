@@ -40,6 +40,18 @@ export default function WalletAndSubs() {
   const [cvv, setCvv] = useState("");
   const [cardholderName, setCardholderName] = useState("");
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [isMonnifyTestMode, setIsMonnifyTestMode] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch("/api/monnify/config")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setIsMonnifyTestMode(data.isTestMode);
+        }
+      })
+      .catch(err => console.warn("Failed to fetch Monnify configuration mode:", err));
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -771,9 +783,19 @@ export default function WalletAndSubs() {
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Funding Amount</span>
                 <span className="text-lg font-black text-slate-800">₦{parseFloat(fundingAmount).toLocaleString()}</span>
               </div>
-              <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-200">
-                Live Gateway Demo
-              </span>
+              {isMonnifyTestMode === true ? (
+                <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-amber-200">
+                  TEST SANDBOX MODE
+                </span>
+              ) : isMonnifyTestMode === false ? (
+                <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+                  SECURE LIVE GATEWAY
+                </span>
+              ) : (
+                <span className="bg-slate-100 text-slate-800 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-wider border border-slate-200 animate-pulse">
+                  Connecting...
+                </span>
+              )}
             </div>
 
             {/* Payment Method Selector Tab */}
