@@ -445,6 +445,46 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     initSupabase();
   }, []);
 
+  // Background Monnify Virtual Accounts Reservation Effect
+  useEffect(() => {
+    if (!currentUser) return;
+    if (currentUser.walletAccounts && currentUser.walletAccounts.length > 0) return;
+
+    const reserveAccounts = async () => {
+      try {
+        const response = await fetch("/api/monnify/reserve-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            customerName: currentUser.fullName,
+            customerEmail: currentUser.email,
+            userId: currentUser.id
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.accounts && data.accounts.length > 0) {
+            const updatedUser: User = {
+              ...currentUser,
+              walletAccountNumber: data.accounts[0].accountNumber,
+              walletAccountName: `TAXIDPDF-${currentUser.fullName.toUpperCase()}`,
+              walletAccounts: data.accounts
+            };
+            syncUserChanges(updatedUser);
+          }
+        }
+      } catch (err) {
+        console.warn("Failed background reservation of Monnify accounts:", err);
+      }
+    };
+
+    const timer = setTimeout(() => {
+      reserveAccounts();
+    }, 1500);
+
+    return () => clearTimeout(timer);
+  }, [currentUser?.id]);
+
   // Save current user edits and synchronize with users list
   const syncUserChanges = (updatedUser: User) => {
     setCurrentUser(updatedUser);

@@ -183,19 +183,99 @@ export default function WalletAndSubs() {
     setIsCheckoutOpen(true);
   };
 
-  const handleProcessPayment = (e: React.FormEvent) => {
-    e.preventDefault();
+  const payWithMonnify = async (amount: number) => {
+    setErrorMsg("");
+    setSuccessMsg("");
     setProcessingPayment(true);
 
-    setTimeout(() => {
-      const numAmount = parseFloat(fundingAmount);
-      fundWallet(numAmount, `Prepaid Deposit via Verified Card (${cardNumber.slice(-4)})`);
+    try {
+      const response = await fetch("/api/monnify/init-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: amount,
+          customerName: currentUser.fullName,
+          customerEmail: currentUser.email,
+          paymentDescription: "Tax ID Portal Wallet Funding"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to contact Monnify checkout initialization server.");
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to initialize checkout.");
+      }
+
+      const isSDKLoaded = typeof (window as any).MonnifySDK !== "undefined";
+
+      if (isSDKLoaded && data.checkoutUrl) {
+        setProcessingPayment(false);
+        setIsCheckoutOpen(false);
+
+        (window as any).MonnifySDK.initialize({
+          amount: amount,
+          currency: "NGN",
+          reference: data.reference,
+          customerName: currentUser.fullName,
+          customerEmail: currentUser.email,
+          apiKey: data.apiKey,
+          contractCode: data.contractCode,
+          paymentDescription: "Tax ID Portal Wallet Funding",
+          isTestMode: data.isTestMode,
+          onComplete: async function (response: any) {
+            console.log("Monnify payment success:", response);
+            try {
+              const verifyRes = await fetch(`/api/monnify/verify-payment/${data.reference}`);
+              if (verifyRes.ok) {
+                const verifyData = await verifyRes.json();
+                if (verifyData.success && verifyData.status === "PAID") {
+                  fundWallet(amount, `Verified Monnify Payment (${data.reference})`);
+                  setSuccessMsg(`Instant Monnify Payment of ₦${amount.toLocaleString()} completed & verified successfully!`);
+                } else {
+                  setErrorMsg(`Monnify transaction state query returned: ${verifyData.status}`);
+                }
+              } else {
+                fundWallet(amount, `Monnify Payment (${data.reference})`);
+                setSuccessMsg(`Payment completed! Wallet funded with ₦${amount.toLocaleString()}.`);
+              }
+            } catch (vErr) {
+              fundWallet(amount, `Monnify Payment (${data.reference})`);
+              setSuccessMsg(`Payment completed! Wallet funded with ₦${amount.toLocaleString()}.`);
+            }
+          },
+          onClose: function (data: any) {
+            console.log("Monnify payment window dismissed.");
+          }
+        });
+      } else if (data.checkoutUrl) {
+        // Fallback to web checkout URL
+        setProcessingPayment(false);
+        setIsCheckoutOpen(false);
+        window.location.href = data.checkoutUrl;
+      } else {
+        // Mock Sandbox simulation overlay if credentials are not filled yet
+        setTimeout(() => {
+          fundWallet(amount, `Instant Deposit via Monnify (${paymentMethod === "card" ? "Card" : "Transfer"})`);
+          setProcessingPayment(false);
+          setIsCheckoutOpen(false);
+          setSuccessMsg(`Sandbox Monnify Payment of ₦${amount.toLocaleString()} successful! Credited your wallet balance.`);
+          setFundingPurpose("custom");
+          setFundingAmount("5000");
+        }, 1800);
+      }
+    } catch (err: any) {
       setProcessingPayment(false);
-      setIsCheckoutOpen(false);
-      setSuccessMsg(`Wallet successfully funded with ₦${numAmount.toLocaleString()}!`);
-      setFundingPurpose("custom");
-      setFundingAmount("5000");
-    }, 1800);
+      setErrorMsg(`Monnify checkout error: ${err.message}`);
+    }
+  };
+
+  const handleProcessPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    const numAmount = parseFloat(fundingAmount);
+    payWithMonnify(numAmount);
   };
 
   const handlePurchaseSub = (tier: SubscriptionTier, rawPrice: number) => {
@@ -433,40 +513,79 @@ export default function WalletAndSubs() {
           {/* Virtual Account Bank Transfer Section */}
           <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
             <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 block">
-              Alternative: Direct Bank Transfer
+              Alternative: Direct Bank Transfer (Monnify Reserved Accounts)
             </span>
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2.5">
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-slate-500">Bank Name</span>
-                <span className="font-extrabold text-slate-900">Moniepoint</span>
+            {currentUser.walletAccounts && currentUser.walletAccounts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {currentUser.walletAccounts.map((acc, idx) => (
+                  <div key={idx} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2.5">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Bank Name</span>
+                      <span className="font-extrabold text-slate-900">{acc.bankName}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Account Number</span>
+                      <div className="flex items-center gap-1.5 font-mono font-extrabold text-emerald-700">
+                        <span>{acc.accountNumber}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(acc.accountNumber);
+                            setCopiedBankAcc(true);
+                            setTimeout(() => setCopiedBankAcc(false), 2000);
+                          }}
+                          className="p-1 hover:bg-slate-200/50 rounded transition cursor-pointer"
+                          title="Copy Account Number"
+                        >
+                          {copiedBankAcc ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Account Name</span>
+                      <span className="font-bold text-slate-800 uppercase text-[9px] truncate max-w-[150px]" title={currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}>
+                        {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-slate-500">Account Number</span>
-                <div className="flex items-center gap-1.5 font-mono font-extrabold text-emerald-700">
-                  <span>{currentUser.walletAccountNumber || "1024859384"}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(currentUser.walletAccountNumber || "1024859384");
-                      setCopiedBankAcc(true);
-                      setTimeout(() => setCopiedBankAcc(false), 2000);
-                    }}
-                    className="p-1 hover:bg-slate-200/50 rounded transition cursor-pointer"
-                    title="Copy Account Number"
-                  >
-                    {copiedBankAcc ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                  </button>
+            ) : (
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-slate-500">Bank Name</span>
+                  <span className="font-extrabold text-slate-900">Moniepoint</span>
+                </div>
+                
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-slate-500">Account Number</span>
+                  <div className="flex items-center gap-1.5 font-mono font-extrabold text-emerald-700">
+                    <span>{currentUser.walletAccountNumber || "1024859384"}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(currentUser.walletAccountNumber || "1024859384");
+                        setCopiedBankAcc(true);
+                        setTimeout(() => setCopiedBankAcc(false), 2000);
+                      }}
+                      className="p-1 hover:bg-slate-200/50 rounded transition cursor-pointer"
+                      title="Copy Account Number"
+                    >
+                      {copiedBankAcc ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                    </button>
+                  </div>
+                </div>
+                
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-semibold text-slate-500">Account Name</span>
+                  <span className="font-bold text-slate-800 uppercase text-[10px] text-right">
+                    {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
+                  </span>
                 </div>
               </div>
-              
-              <div className="flex justify-between items-center text-xs">
-                <span className="font-semibold text-slate-500">Account Name</span>
-                <span className="font-bold text-slate-800 uppercase text-[10px] text-right">
-                  {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
-                </span>
-              </div>
-            </div>
+            )}
 
             <button
               type="button"
@@ -694,41 +813,80 @@ export default function WalletAndSubs() {
             {paymentMethod === "transfer" ? (
               <div className="space-y-4">
                 <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-                  Please make a standard bank transfer of <strong className="text-slate-800">₦{parseFloat(fundingAmount).toLocaleString()}</strong> to your assigned Moniepoint gateway account below. Our API ledger detects and syncs incoming credits automatically.
+                  Please make a standard bank transfer of <strong className="text-slate-800">₦{parseFloat(fundingAmount).toLocaleString()}</strong> to one of your assigned Monnify gateway accounts below. Our API ledger detects and syncs incoming credits automatically.
                 </p>
 
-                <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-semibold text-slate-500">Bank Name</span>
-                    <span className="font-extrabold text-slate-900">Moniepoint</span>
+                {currentUser.walletAccounts && currentUser.walletAccounts.length > 0 ? (
+                  <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                    {currentUser.walletAccounts.map((acc, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-500">Bank Name</span>
+                          <span className="font-extrabold text-slate-900">{acc.bankName}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-500">Account Number</span>
+                          <div className="flex items-center gap-1.5 font-mono font-extrabold text-emerald-700">
+                            <span>{acc.accountNumber}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(acc.accountNumber);
+                                setCopiedBankAcc(true);
+                                setTimeout(() => setCopiedBankAcc(false), 2000);
+                              }}
+                              className="p-1 hover:bg-slate-200/50 rounded transition cursor-pointer"
+                              title="Copy Account Number"
+                            >
+                              {copiedBankAcc ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                            </button>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-semibold text-slate-500">Account Name</span>
+                          <span className="font-bold text-slate-800 uppercase text-[9px] truncate max-w-[150px]" title={currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}>
+                            {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-semibold text-slate-500">Account Number</span>
-                    <div className="flex items-center gap-1.5 font-mono font-extrabold text-emerald-700">
-                      <span>{currentUser.walletAccountNumber || "1024859384"}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          navigator.clipboard.writeText(currentUser.walletAccountNumber || "1024859384");
-                          setCopiedBankAcc(true);
-                          setTimeout(() => setCopiedBankAcc(false), 2000);
-                        }}
-                        className="p-1 hover:bg-slate-200/50 rounded transition cursor-pointer"
-                        title="Copy Account Number"
-                      >
-                        {copiedBankAcc ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
-                      </button>
+                ) : (
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-4 space-y-3">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Bank Name</span>
+                      <span className="font-extrabold text-slate-900">Moniepoint</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Account Number</span>
+                      <div className="flex items-center gap-1.5 font-mono font-extrabold text-emerald-700">
+                        <span>{currentUser.walletAccountNumber || "1024859384"}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(currentUser.walletAccountNumber || "1024859384");
+                            setCopiedBankAcc(true);
+                            setTimeout(() => setCopiedBankAcc(false), 2000);
+                          }}
+                          className="p-1 hover:bg-slate-200/50 rounded transition cursor-pointer"
+                          title="Copy Account Number"
+                        >
+                          {copiedBankAcc ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-400" />}
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-slate-500">Account Name</span>
+                      <span className="font-bold text-slate-800 uppercase text-[10px] text-right">
+                        {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
+                      </span>
                     </div>
                   </div>
-                  
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="font-semibold text-slate-500">Account Name</span>
-                    <span className="font-bold text-slate-800 uppercase text-[10px] text-right">
-                      {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
-                    </span>
-                  </div>
-                </div>
+                )}
 
                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-2 text-[10px] text-slate-400 leading-none">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />

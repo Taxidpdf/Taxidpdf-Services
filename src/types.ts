@@ -74,6 +74,7 @@ export interface User {
   nin?: string;
   walletAccountNumber?: string;
   walletAccountName?: string;
+  walletAccounts?: Array<{ bankName: string; accountNumber: string; bankCode: string }>;
   isAdmin?: boolean;
 }
 
