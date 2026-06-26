@@ -357,11 +357,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         finalCurrent = null;
       }
-    } else if (parsedUsers.length > 0) {
-      // Auto login Franklin for quick evaluation
-      const demo = parsedUsers.find(u => u?.email && u.email.toLowerCase() === "seiminiyifafranklin@gmail.com") || parsedUsers[0];
-      finalCurrent = demo;
-      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(demo));
     }
 
     setCurrentUser(finalCurrent);

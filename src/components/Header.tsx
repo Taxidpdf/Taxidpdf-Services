@@ -2,7 +2,11 @@ import React from "react";
 import { ShieldCheck, Landmark, Globe, LogOut } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
-export default function Header() {
+interface HeaderProps {
+  onEnterAdmin?: () => void;
+}
+
+export default function Header({ onEnterAdmin }: HeaderProps) {
   const { currentUser, logout } = useUser();
 
   const getInitials = (name: string) => {
@@ -74,35 +78,48 @@ export default function Header() {
         {/* User profile or status badges */}
         <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 w-full md:w-auto">
           {currentUser ? (
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl py-1.5 pl-3 pr-2.5 shadow-sm text-xs">
-              <div className="flex items-center gap-2">
-                {currentUser.profilePicture && currentUser.profilePicture.startsWith("http") ? (
-                  <img 
-                    src={currentUser.profilePicture} 
-                    alt={currentUser.fullName} 
-                    className="w-7 h-7 rounded-full border border-emerald-500/50"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-[10px]">
-                    {getInitials(currentUser.fullName)}
-                  </div>
-                )}
-                <div className="hidden sm:block text-left">
-                  <p className="font-extrabold text-slate-800 leading-none">{currentUser.fullName}</p>
-                  <p className="text-[9px] text-slate-400 mt-0.5 font-mono">₦{currentUser.walletBalance.toLocaleString()}</p>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              {currentUser.isAdmin && onEnterAdmin && (
+                <button
+                  onClick={onEnterAdmin}
+                  className="bg-slate-900 text-amber-400 hover:bg-slate-800 hover:text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-2xl text-[11px] font-black transition flex items-center gap-1.5 shadow-sm cursor-pointer select-none"
+                  title="Enter Admin Management Dashboard"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
               
-              <div className="h-4 w-[1px] bg-slate-200 hidden sm:block" />
+              <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl py-1.5 pl-3 pr-2.5 shadow-sm text-xs">
+                <div className="flex items-center gap-2">
+                  {currentUser.profilePicture && currentUser.profilePicture.startsWith("http") ? (
+                    <img 
+                      src={currentUser.profilePicture} 
+                      alt={currentUser.fullName} 
+                      className="w-7 h-7 rounded-full border border-emerald-500/50"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-[10px]">
+                      {getInitials(currentUser.fullName)}
+                    </div>
+                  )}
+                  <div className="hidden sm:block text-left">
+                    <p className="font-extrabold text-slate-800 leading-none">{currentUser.fullName}</p>
+                    <p className="text-[9px] text-slate-400 mt-0.5 font-mono">₦{currentUser.walletBalance.toLocaleString()}</p>
+                  </div>
+                </div>
+                
+                <div className="h-4 w-[1px] bg-slate-200 hidden sm:block" />
 
-              <button
-                onClick={logout}
-                className="text-slate-400 hover:text-red-600 transition flex items-center gap-1 font-bold cursor-pointer select-none"
-              >
-                <span className="hidden sm:inline">Logout</span>
-                <LogOut className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={logout}
+                  className="text-slate-400 hover:text-red-600 transition flex items-center gap-1 font-bold cursor-pointer select-none"
+                >
+                  <span className="hidden sm:inline">Logout</span>
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           ) : (
             <>
