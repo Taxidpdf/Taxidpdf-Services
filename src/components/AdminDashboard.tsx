@@ -1506,55 +1506,64 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <div
                         id="printable-area"
                         ref={adminCertificateRef}
-                        className="w-[794px] h-[1123px] bg-[#f8faf9] p-0 shadow-2xl flex flex-col justify-between text-black font-sans relative shrink-0 overflow-hidden"
+                        className="w-[794px] h-[1123px] shrink-0 overflow-hidden"
                         style={{
                           fontFamily: "'Inter', sans-serif",
                           boxSizing: "border-box",
+                          width: "794px",
+                          height: "1123px",
+                          backgroundColor: "#f8faf9",
+                          padding: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                          position: "relative"
                         }}
                       >
                         {/* Solid Green Top Bar */}
-                        <div className="w-full h-8 bg-[#1a5f35] shrink-0" />
+                        <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
 
                         {/* White Header Area */}
-                        <div className="bg-white px-10 py-5 flex items-center justify-between border-b border-slate-200 shrink-0">
+                        <div style={{ backgroundColor: "#ffffff", paddingLeft: "40px", paddingRight: "40px", paddingTop: "20px", paddingBottom: "20px", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #e2e8f0", flexShrink: 0 }}>
                           
                           {/* JRB Logo on the Left */}
-                          <div className="flex flex-col items-start select-none">
-                            <div className="flex items-center gap-2.5">
-                              <span className="text-5xl font-extrabold text-[#008248] tracking-tighter" style={{ fontFamily: "Inter, sans-serif" }}>JRB</span>
-                              <div className="flex flex-col text-slate-800 text-[10px] font-extrabold leading-tight tracking-wider uppercase text-left">
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", userSelect: "none" }}>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                              <span style={{ fontSize: "48px", fontWeight: "800", color: "#008248", letterSpacing: "-0.05em", lineHeight: "1", fontFamily: "Inter, sans-serif" }}>JRB</span>
+                              <div style={{ display: "flex", flexDirection: "column", color: "#1e293b", fontSize: "10px", fontWeight: "800", lineHeight: "1.2", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                                 <span>Joint</span>
                                 <span>Revenue</span>
                                 <span>Board</span>
                               </div>
                             </div>
-                            <div className="w-full border-t border-slate-300 my-1" />
-                            <span className="text-[8px] font-bold text-slate-500 tracking-wider text-left">Harmonize. Optimize. Trust.</span>
+                            <div style={{ width: "100%", borderTop: "1px solid #cbd5e1", marginTop: "4px", marginBottom: "4px" }} />
+                            <span style={{ fontSize: "8px", fontWeight: "700", color: "#64748b", letterSpacing: "0.05em" }}>Harmonize. Optimize. Trust.</span>
                           </div>
 
                           {/* NRS Logo on the Right */}
-                          <div className="flex flex-col items-end select-none">
-                            <div className="flex items-center gap-2.5">
-                              <span className="text-5xl font-black text-[#56595e] tracking-tight" style={{ fontFamily: "Inter, sans-serif" }}>NRS</span>
-                              <div className="flex flex-col text-[#b12c1b] text-[10px] font-black leading-none tracking-wider text-left">
+                          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", userSelect: "none" }}>
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                              <span style={{ fontSize: "48px", fontWeight: "900", color: "#56595e", letterSpacing: "-0.025em", lineHeight: "1", fontFamily: "Inter, sans-serif" }}>NRS</span>
+                              <div style={{ display: "flex", flexDirection: "column", color: "#b12c1b", fontSize: "10px", fontWeight: "900", lineHeight: "1", letterSpacing: "0.05em", textAlign: "left" }}>
                                 <span>NIGERIA</span>
                                 <span>REVENUE</span>
                                 <span>SERVICE</span>
                               </div>
                             </div>
-                            <div className="w-full h-[3px] bg-[#56595e] mt-2 relative">
-                              <div className="absolute right-4 w-8 h-full bg-[#b12c1b]" />
+                            <div style={{ width: "100%", height: "3px", backgroundColor: "#56595e", marginTop: "8px", position: "relative" }}>
+                              <div style={{ position: "absolute", right: "16px", width: "32px", height: "100%", backgroundColor: "#b12c1b" }} />
                             </div>
                           </div>
 
                         </div>
 
                         {/* Main Content Body */}
-                        <div className="flex-1 p-10 flex flex-col justify-between relative">
+                        <div style={{ flex: "1 1 0%", padding: "40px", display: "flex", flexDirection: "column", justifyBox: "space-between", position: "relative" }}>
                           
                           {/* Diagonal Gold/Amber Sash in the Background on the Right */}
-                          <div className="absolute inset-y-0 right-0 h-full w-[320px] pointer-events-none z-0 overflow-hidden">
-                            <svg className="w-full h-full" viewBox="0 0 320 1023" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", width: "320px", pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+                            <svg style={{ width: "100%", height: "100%" }} viewBox="0 0 320 1023" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
                               {/* Shadow band */}
                               <path d="M120 0 L180 0 L320 1023 L260 1023 Z" fill="#925f19" opacity="0.15" />
                               {/* Main gold/amber gradient sash */}
@@ -1570,47 +1579,52 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
 
                           {/* Title */}
-                          <div className="z-10 mt-2 select-none text-left">
-                            <h2 className="text-xl font-extrabold text-[#111] uppercase tracking-wide text-left">
+                          <div style={{ zIndex: 10, marginTop: "8px", userSelect: "none" }}>
+                            <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#111111", textTransform: "uppercase", letterSpacing: "0.025em", margin: 0 }}>
                               NON INDIVIDUAL TAX ID RETRIEVAL
                             </h2>
                           </div>
 
                           {/* Box 1: Company Details and Circular Overlapping Badge */}
-                          <div className="flex relative items-stretch gap-6 z-10 mt-3">
+                          <div style={{ display: "flex", flexDirection: "row", alignItems: "stretch", gap: "24px", zIndex: 10, marginTop: "12px", position: "relative" }}>
                             
                             {/* Left Side: Solid details box with thin black border */}
-                            <div className="flex-1 bg-white border border-black p-8 relative">
-                              <div className="grid grid-cols-12 gap-y-6 text-base font-bold text-slate-900 leading-tight text-left">
-                                
-                                <div className="col-span-4 text-[16px] font-extrabold text-slate-950 uppercase tracking-wide">Company Name:</div>
-                                <div className="col-span-8 text-[16px] font-bold text-slate-800 uppercase break-words pr-2">
-                                  {generatedSlip.taxpayerName}
-                                </div>
-
-                                <div className="col-span-4 text-[16px] font-extrabold text-slate-950 uppercase tracking-wide">RC:</div>
-                                <div className="col-span-8 text-[16px] font-bold text-slate-800 uppercase font-mono break-words pr-2">
-                                  {generatedSlip.cacNumber}
-                                </div>
-
-                                <div className="col-span-4 text-[16px] font-extrabold text-slate-950 uppercase tracking-wide">Tax ID:</div>
-                                <div className="col-span-8 text-[16px] font-bold text-slate-800 uppercase font-mono break-words pr-2">
-                                  {generatedSlip.tin}
-                                </div>
-
-                                <div className="col-span-4 text-[16px] font-extrabold text-slate-950 uppercase tracking-wide">Business Address:</div>
-                                <div className="col-span-8 text-[15px] font-bold text-slate-700 uppercase leading-relaxed break-words pr-2 font-sans">
-                                  {generatedSlip.registeredAddress}
-                                </div>
-
-                              </div>
+                            <div style={{ flex: "1 1 0%", backgroundColor: "#ffffff", border: "1px solid #000000", padding: "32px", position: "relative" }}>
+                              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                <tbody>
+                                  <tr>
+                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Company Name:</td>
+                                    <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                                      {generatedSlip.taxpayerName}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>RC:</td>
+                                    <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                                      {generatedSlip.cacNumber}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Tax ID:</td>
+                                    <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                                      {generatedSlip.tin}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top" }}>Business Address:</td>
+                                    <td style={{ width: "65%", fontSize: "15px", fontWeight: "700", color: "#334155", textTransform: "uppercase", lineHeight: "1.5", verticalAlign: "top", wordBreak: "break-word" }}>
+                                      {generatedSlip.registeredAddress}
+                                    </td>
+                                  </tr>
+                                </tbody>
+                              </table>
                             </div>
 
                             {/* Right Side Width Space for Circular Badge */}
-                            <div className="w-32 shrink-0 flex items-center justify-center relative select-none">
+                            <div style={{ width: "128px", flexShrink: 0, display: "flex", alignItems: "center", justifyBox: "center", position: "relative", userSelect: "none" }}>
                               {/* The Green Circular Badge overlapping Box 1 right boundary */}
-                              <div className="absolute right-[-10px] w-48 h-48 rounded-full bg-[#1b552b] border-[8px] border-[#c08d2d] flex items-center justify-center shadow-xl z-20">
-                                <div className="w-32 h-32 bg-white p-2.5 rounded-2xl flex items-center justify-center overflow-hidden">
+                              <div style={{ position: "absolute", right: "-10px", width: "192px", height: "192px", borderRadius: "50%", backgroundColor: "#1b552b", border: "8px solid #c08d2d", display: "flex", alignItems: "center", justifyBox: "center", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)", zIndex: 20 }}>
+                                <div style={{ width: "128px", height: "128px", backgroundColor: "#ffffff", padding: "10px", borderRadius: "16px", display: "flex", alignItems: "center", justifyBox: "center", overflow: "hidden" }}>
                                   <QRCodeSVG
                                     value="https://taxid.nrs.gov.ng/"
                                     size={110}
@@ -1624,30 +1638,30 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
 
                           {/* Box 2: Verification Welcome and Direct Action */}
-                          <div className="border border-black bg-white p-8 relative z-10 flex gap-5 items-start mt-6">
+                          <div style={{ border: "1px solid #000000", backgroundColor: "#ffffff", padding: "32px", position: "relative", zIndex: 10, display: "flex", flexDirection: "row", gap: "20px", alignItems: "flex-start", marginTop: "24px" }}>
                             
                             {/* Green Round Check Icon */}
-                            <div className="w-8 h-8 rounded-full bg-[#1e7e34] flex items-center justify-center shrink-0 text-white font-bold text-lg select-none">
+                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#1e7e34", display: "flex", alignItems: "center", justifyBox: "center", color: "#ffffff", fontWeight: "bold", fontSize: "18px", flexShrink: 0, userSelect: "none" }}>
                               ✓
                             </div>
 
                             {/* Message Blocks */}
-                            <div className="space-y-4 text-left">
-                              <h4 className="text-xl font-bold text-slate-900 leading-tight select-none" style={{ fontFamily: "serif, Georgia" }}>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                              <h4 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", lineHeight: "1.25", fontFamily: "Georgia, serif", margin: 0 }}>
                                 Hello, {generatedSlip.taxpayerName}
                               </h4>
                               
-                              <ul className="space-y-3.5 text-[15px] font-semibold text-[#1a3a54]">
+                              <ul style={{ display: "flex", flexDirection: "column", gap: "14px", margin: 0, padding: 0, listStyle: "none" }}>
                                 
-                                <li className="flex items-start gap-2.5">
-                                  <span className="w-2.5 h-2.5 rounded-full bg-[#1a3a54] mt-1.5 shrink-0 select-none" />
+                                <li style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
+                                  <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
                                   <span>Your RC Number has been successfully verified and matches a Tax-ID in our system</span>
                                 </li>
                                 
-                                <li className="flex flex-col gap-2">
-                                  <div className="flex items-start gap-2.5">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-[#1a3a54] mt-1.5 shrink-0 select-none" />
-                                    <span>Your Tax ID is <strong className="font-extrabold text-slate-900 select-all font-mono text-base ml-1">{generatedSlip.tin}</strong></span>
+                                <li style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                  <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
+                                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
+                                    <span>Your Tax ID is <strong style={{ fontWeight: "800", color: "#0f172a", fontFamily: "monospace", fontSize: "16px", marginLeft: "4px" }}>{generatedSlip.tin}</strong></span>
                                   </div>
                                 </li>
 
@@ -1657,9 +1671,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           </div>
 
                           {/* Disclaimer Consent text and Reset trigger */}
-                          <div className="flex items-center justify-between mt-8 z-10 relative">
+                          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyBox: "space-between", marginTop: "32px", zIndex: 10, position: "relative" }}>
                             
-                            <p className="text-xs text-slate-600 font-medium max-w-[500px] leading-relaxed text-left select-none">
+                            <p style={{ fontSize: "12px", color: "#475569", fontWeight: "500", maxWidth: "500px", lineHeight: "1.52", margin: 0, userSelect: "none" }}>
                               I hereby consent to the processing of my information for tax-related identity verification.
                             </p>
 
@@ -1668,9 +1682,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         </div>
 
                         {/* Solid Green Bottom Bar */}
-                        <div className="w-full h-8 bg-[#1a5f35] shrink-0" />
+                        <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
 
                       </div>
+
                     </div>
 
                     <p className="text-[10px] text-slate-500 font-semibold text-center">
