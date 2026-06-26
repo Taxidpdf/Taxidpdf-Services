@@ -106,12 +106,27 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
       const element = certificateRef.current;
       
       const canvas = await html2canvas(element, {
-        scale: 3,
+        scale: 2,
         useCORS: true,
-        logging: false,
+        logging: true,
         backgroundColor: "#ffffff",
-        windowWidth: 794, 
-        windowHeight: 1123, 
+        width: 794,
+        height: 1123,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 794,
+        windowHeight: 1123,
+        onclone: (clonedDoc) => {
+          const el = clonedDoc.getElementById("printable-area");
+          if (el) {
+            el.style.transform = "none";
+            el.style.position = "relative";
+            el.style.left = "0";
+            el.style.top = "0";
+            el.style.margin = "0";
+            el.style.display = "flex";
+          }
+        }
       });
 
       const imgData = canvas.toDataURL("image/png");
@@ -128,7 +143,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
       pdf.save(`JRB_TIN_Slip_${taxpayerData.tin.replace(/[^a-zA-Z0-9]/g, "")}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
-      alert("An error occurred while compiling your PDF. Please try again or use the print option.");
+      alert(`An error occurred while compiling your PDF: ${err instanceof Error ? err.message : String(err)}. Please try again or use the print option.`);
     } finally {
       setDownloading(false);
     }
