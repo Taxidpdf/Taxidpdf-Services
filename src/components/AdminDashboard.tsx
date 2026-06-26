@@ -345,6 +345,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 el.style.top = "0";
                 el.style.margin = "0";
                 el.style.display = "flex";
+                el.style.flexDirection = "column";
+
+                // Ensure parent container does not clip or scale down the cloned document layout
+                const parent = el.parentElement;
+                if (parent) {
+                  parent.style.width = "794px";
+                  parent.style.height = "1123px";
+                  parent.style.overflow = "visible";
+                  parent.style.transform = "none";
+                  parent.style.position = "relative";
+                  parent.style.left = "0";
+                  parent.style.top = "0";
+                }
 
                 // Force standard colors on elements to prevent rendering issues due to stripped stylesheets
                 const elements = el.querySelectorAll("*");
@@ -416,6 +429,19 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 el.style.top = "0";
                 el.style.margin = "0";
                 el.style.display = "flex";
+                el.style.flexDirection = "column";
+
+                // Ensure parent container does not clip or scale down the cloned document layout
+                const parent = el.parentElement;
+                if (parent) {
+                  parent.style.width = "794px";
+                  parent.style.height = "1123px";
+                  parent.style.overflow = "visible";
+                  parent.style.transform = "none";
+                  parent.style.position = "relative";
+                  parent.style.left = "0";
+                  parent.style.top = "0";
+                }
 
                 // Force standard colors on elements to prevent rendering issues due to stripped stylesheets
                 const elements = el.querySelectorAll("*");
