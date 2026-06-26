@@ -58,10 +58,6 @@ export default function LandingPage() {
     authSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
-  const handleDemoAccess = () => {
-    login("Seiminiyifafranklin@gmail.com", "password");
-  };
-
   const handleForgotPasswordSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -267,19 +263,19 @@ export default function LandingPage() {
             <span>Secure Joint Tax Board API Synced Gateway</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-[1.08] font-sans">
+          <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[76px] font-black text-slate-900 tracking-tighter leading-[1.02] font-sans">
             {portalSettings.landingTitle}
           </h1>
 
-          <p className="text-slate-500 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto lg:mx-0">
+          <p className="text-slate-600 text-lg sm:text-xl leading-relaxed max-w-2xl mx-auto lg:mx-0">
             {portalSettings.landingDescription}
           </p>
 
           {/* Value tags */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto lg:mx-0 pt-2 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto lg:mx-0 pt-2 text-left">
             {(portalSettings.benefits || []).map((benefit, bIdx) => (
-              <div key={bIdx} className="flex items-center gap-2 text-xs font-semibold text-slate-700">
-                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+              <div key={bIdx} className="flex items-center gap-2 text-sm sm:text-base font-semibold text-slate-700">
+                <CheckCircle2 className="w-4.5 h-4.5 text-emerald-500 shrink-0" />
                 <span>{benefit}</span>
               </div>
             ))}
@@ -288,14 +284,14 @@ export default function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <button
               onClick={() => handleScrollToAuth(false)}
-              className="w-full sm:w-auto px-7 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-2 group"
+              className="w-full sm:w-auto px-9 py-5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm uppercase tracking-wider rounded-2xl shadow-lg shadow-emerald-200 transition-all cursor-pointer flex items-center justify-center gap-2 group"
             >
               <span>Get Started Free</span>
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
             </button>
             <a
               href="#pricing"
-              className="w-full sm:w-auto text-center px-7 py-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-xs uppercase tracking-wider rounded-2xl transition cursor-pointer"
+              className="w-full sm:w-auto text-center px-9 py-5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-800 font-extrabold text-sm uppercase tracking-wider rounded-2xl transition cursor-pointer"
             >
               View Gateway Tariffs
             </a>
@@ -599,20 +595,7 @@ export default function LandingPage() {
             </form>
           )}
 
-          {/* Quick Sandbox Tester */}
-          <div className="relative flex py-3.5 items-center">
-            <div className="flex-grow border-t border-slate-100"></div>
-            <span className="flex-shrink mx-3 text-slate-400 text-[9px] uppercase tracking-widest font-extrabold">Instant Testing Gateway</span>
-            <div className="flex-grow border-t border-slate-100"></div>
-          </div>
 
-          <button
-            onClick={handleDemoAccess}
-            className="w-full py-2.5 border border-dashed border-emerald-500 bg-emerald-50/50 text-emerald-800 font-extrabold text-[11px] uppercase tracking-wider rounded-xl hover:bg-emerald-50 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <span>Demo Account Fast Login</span>
-            <ArrowRight className="w-4 h-4 text-emerald-600" />
-          </button>
 
           {/* Toggle state action */}
           <div className="text-center pt-4 border-t border-slate-100 mt-4">

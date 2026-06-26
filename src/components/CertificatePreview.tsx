@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Download, Printer, Copy, Check, RotateCcw, Share2, ShieldCheck, AlertCircle, Coins, CreditCard, Lock, Loader2, Wallet, Building, ArrowRight } from "lucide-react";
 import { TaxpayerData } from "../types";
 import html2canvas from "html2canvas";
@@ -15,10 +15,33 @@ interface CertificatePreviewProps {
 export default function CertificatePreview({ taxpayerData, onReset, onNavigateToBilling }: CertificatePreviewProps) {
   const { currentUser, registerDownload, isTrialActive, fundWallet } = useUser();
   const certificateRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
   const [downloading, setDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [billingError, setBillingError] = useState("");
   const [billingSuccess, setBillingSuccess] = useState("");
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const width = containerRef.current.getBoundingClientRect().width;
+        // Adjust for responsive padding on different device sizes
+        const padding = window.innerWidth < 640 ? 16 : 48;
+        const availableWidth = width - padding;
+        const newScale = Math.min(1, availableWidth / 794);
+        setScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    const timer = setTimeout(updateScale, 150);
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Payment popup state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -105,29 +128,57 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
     try {
       const element = certificateRef.current;
       
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: true,
-        backgroundColor: "#ffffff",
-        width: 794,
-        height: 1123,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 794,
-        windowHeight: 1123,
-        onclone: (clonedDoc) => {
-          const el = clonedDoc.getElementById("printable-area");
-          if (el) {
-            el.style.transform = "none";
-            el.style.position = "relative";
-            el.style.left = "0";
-            el.style.top = "0";
-            el.style.margin = "0";
-            el.style.display = "flex";
+      let canvas;
+      try {
+        canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: true,
+          backgroundColor: "#ffffff",
+          width: 794,
+          height: 1123,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
+          windowHeight: 1123,
+          onclone: (clonedDoc) => {
+            const el = clonedDoc.getElementById("printable-area");
+            if (el) {
+              el.style.transform = "none";
+              el.style.position = "relative";
+              el.style.left = "0";
+              el.style.top = "0";
+              el.style.margin = "0";
+              el.style.display = "flex";
+            }
           }
-        }
-      });
+        });
+      } catch (corsErr) {
+        console.warn("CORS-enabled HTML2Canvas failed, retrying without CORS...", corsErr);
+        canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: false,
+          logging: true,
+          backgroundColor: "#ffffff",
+          width: 794,
+          height: 1123,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
+          windowHeight: 1123,
+          onclone: (clonedDoc) => {
+            const el = clonedDoc.getElementById("printable-area");
+            if (el) {
+              el.style.transform = "none";
+              el.style.position = "relative";
+              el.style.left = "0";
+              el.style.top = "0";
+              el.style.margin = "0";
+              el.style.display = "flex";
+            }
+          }
+        });
+      }
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
@@ -140,7 +191,14 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
-      pdf.save(`JRB_TIN_Slip_${taxpayerData.tin.replace(/[^a-zA-Z0-9]/g, "")}.pdf`);
+      
+      // Dynamic naming tag requested by user: TAXID-FRANKLIN_ENTERPRISE.pdf
+      const cleanName = taxpayerData.taxpayerName
+        .toUpperCase()
+        .replace(/[^A-Z0-9\s]/g, "")
+        .trim()
+        .replace(/\s+/g, "_");
+      pdf.save(`TAXID-${cleanName}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert(`An error occurred while compiling your PDF: ${err instanceof Error ? err.message : String(err)}. Please try again or use the print option.`);
@@ -333,19 +391,32 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
         </div>
 
         {/* Certificate Display Screen */}
-        <div className="lg:col-span-3 flex justify-center">
-          <div className="w-full max-w-[794px] overflow-x-auto bg-slate-100 rounded-3xl p-4 md:p-8 flex justify-center border border-slate-200/50 shadow-xl shadow-slate-100/50">
+        <div className="lg:col-span-3 flex justify-center w-full">
+          <div ref={containerRef} className="w-full max-w-[794px] bg-slate-100 rounded-3xl p-4 md:p-8 flex justify-center items-center border border-slate-200/50 shadow-xl shadow-slate-100/50 overflow-hidden">
             
-            {/* The Actual Printable JTB National TIN Certificate Slip */}
-            <div
-              id="printable-area"
-              ref={certificateRef}
-              className="w-[794px] h-[1123px] bg-[#f8faf9] p-0 shadow-2xl flex flex-col justify-between text-black font-sans relative shrink-0 overflow-hidden"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                boxSizing: "border-box",
-              }}
+            {/* Aspect-ratio-fitting scale wrapper for high fidelity preview without horizontal scrolling */}
+            <div 
+              style={{ 
+                height: `${1123 * scale}px`, 
+                width: `${794 * scale}px` 
+              }} 
+              className="relative shrink-0 transition-all duration-300"
             >
+              {/* The Actual Printable JTB National TIN Certificate Slip */}
+              <div
+                id="printable-area"
+                ref={certificateRef}
+                className="w-[794px] h-[1123px] bg-[#f8faf9] p-0 shadow-2xl flex flex-col justify-between text-black font-sans relative shrink-0 overflow-hidden"
+                style={{
+                  fontFamily: "'Inter', sans-serif",
+                  boxSizing: "border-box",
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                  position: "absolute",
+                  left: 0,
+                  top: 0
+                }}
+              >
               {/* Solid Green Top Bar */}
               <div className="w-full h-8 bg-[#1a5f35] shrink-0" />
 
@@ -523,6 +594,8 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
 
               {/* Solid Green Bottom Bar */}
               <div className="w-full h-8 bg-[#1a5f35] shrink-0" />
+
+            </div>
 
             </div>
 

@@ -296,29 +296,57 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     try {
       const element = adminCertificateRef.current;
       
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: true,
-        backgroundColor: "#ffffff",
-        width: 794,
-        height: 1123,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: 794,
-        windowHeight: 1123,
-        onclone: (clonedDoc) => {
-          const el = clonedDoc.getElementById("printable-area");
-          if (el) {
-            el.style.transform = "none";
-            el.style.position = "relative";
-            el.style.left = "0";
-            el.style.top = "0";
-            el.style.margin = "0";
-            el.style.display = "flex";
+      let canvas;
+      try {
+        canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: true,
+          backgroundColor: "#ffffff",
+          width: 794,
+          height: 1123,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
+          windowHeight: 1123,
+          onclone: (clonedDoc) => {
+            const el = clonedDoc.getElementById("printable-area");
+            if (el) {
+              el.style.transform = "none";
+              el.style.position = "relative";
+              el.style.left = "0";
+              el.style.top = "0";
+              el.style.margin = "0";
+              el.style.display = "flex";
+            }
           }
-        }
-      });
+        });
+      } catch (corsErr) {
+        console.warn("CORS-enabled Admin HTML2Canvas failed, retrying without CORS...", corsErr);
+        canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: false,
+          logging: true,
+          backgroundColor: "#ffffff",
+          width: 794,
+          height: 1123,
+          scrollX: 0,
+          scrollY: 0,
+          windowWidth: 794,
+          windowHeight: 1123,
+          onclone: (clonedDoc) => {
+            const el = clonedDoc.getElementById("printable-area");
+            if (el) {
+              el.style.transform = "none";
+              el.style.position = "relative";
+              el.style.left = "0";
+              el.style.top = "0";
+              el.style.margin = "0";
+              el.style.display = "flex";
+            }
+          }
+        });
+      }
 
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
@@ -331,7 +359,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight, undefined, "FAST");
-      pdf.save(`JRB_TIN_Slip_${generatedSlip.tin.replace(/[^a-zA-Z0-9]/g, "")}.pdf`);
+      
+      const cleanName = generatedSlip.taxpayerName
+        .toUpperCase()
+        .replace(/[^A-Z0-9\s]/g, "")
+        .trim()
+        .replace(/\s+/g, "_");
+      pdf.save(`TAXID-${cleanName}.pdf`);
     } catch (err) {
       console.error("PDF generation failed:", err);
       alert(`An error occurred while compiling your PDF: ${err instanceof Error ? err.message : String(err)}. Please try again or use the print option.`);
