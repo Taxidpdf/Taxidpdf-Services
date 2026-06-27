@@ -331,7 +331,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }
               }
 
-              const el = clonedDoc.getElementById("printable-area");
+              const el = clonedDoc.getElementById("admin-printable-area");
               if (el) {
                 el.style.transform = "none";
                 el.style.position = "relative";
@@ -409,7 +409,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }
               }
 
-              const el = clonedDoc.getElementById("printable-area");
+              const el = clonedDoc.getElementById("admin-printable-area");
               if (el) {
                 el.style.transform = "none";
                 el.style.position = "relative";
@@ -1480,10 +1480,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           body * {
                             visibility: hidden;
                           }
-                          #printable-area, #printable-area * {
+                          #admin-printable-area, #admin-printable-area * {
                             visibility: visible;
                           }
-                          #printable-area {
+                          #admin-printable-area {
                             position: absolute !important;
                             left: 0 !important;
                             top: 0 !important;
@@ -1503,244 +1503,247 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         }
                       `}</style>
                       
-                      {/* The Actual Printable JTB National TIN Certificate Slip */}
-                      <div
-                        id="printable-area"
-                        ref={adminCertificateRef}
-                        className="w-[794px] h-[1123px] shrink-0 overflow-hidden"
-                        style={{
-                          fontFamily: "'Inter', sans-serif",
-                          boxSizing: "border-box",
-                          width: "794px",
-                          height: "1123px",
-                          backgroundColor: "#f8faf9",
-                          padding: 0,
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "space-between",
-                          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-                          position: "relative"
-                        }}
-                      >
-                        {/* Solid Green Top Bar */}
-                        <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
+                      {/* Wrap the printable area with a helper parent exactly like in CertificatePreview to avoid html2canvas positioning bugs */}
+                      <div style={{ width: "794px", height: "1123px", position: "relative" }} className="shrink-0">
+                        {/* The Actual Printable JTB National TIN Certificate Slip */}
+                        <div
+                          id="admin-printable-area"
+                          ref={adminCertificateRef}
+                          className="w-[794px] h-[1123px] shrink-0 overflow-hidden"
+                          style={{
+                            fontFamily: "'Inter', sans-serif",
+                            boxSizing: "border-box",
+                            width: "794px",
+                            height: "1123px",
+                            backgroundColor: "#f8faf9",
+                            padding: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                            position: "relative"
+                          }}
+                        >
+                          {/* Solid Green Top Bar */}
+                          <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
 
-                        {/* White Header Area */}
-                        <div style={{ backgroundColor: "#ffffff", display: "flex", flexDirection: "column", flexShrink: 0 }}>
-                          <div style={{ paddingLeft: "40px", paddingRight: "40px", paddingTop: "20px", paddingBottom: "20px", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                          {/* White Header Area */}
+                          <div style={{ backgroundColor: "#ffffff", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+                            <div style={{ paddingLeft: "40px", paddingRight: "40px", paddingTop: "20px", paddingBottom: "20px", display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                              
+                              {/* JRB Logo on the Left */}
+                              <div style={{ userSelect: "none", width: "190px" }}>
+                                <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
+                                  <tbody>
+                                    <tr>
+                                      <td style={{ padding: 0, verticalAlign: "middle", width: "85px" }}>
+                                        <span style={{ fontSize: "38px", fontWeight: "900", color: "#008248", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-1.5px", lineHeight: "1.1", display: "block" }}>
+                                          JRB
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: 0, paddingLeft: "8px", verticalAlign: "middle" }}>
+                                        <div style={{ color: "#1e293b", fontSize: "9px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                                          <div>JOINT</div>
+                                          <div>REVENUE</div>
+                                          <div>BOARD</div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td colSpan={2} style={{ padding: 0, height: "6px" }} />
+                                    </tr>
+                                    <tr>
+                                      <td colSpan={2} style={{ padding: 0 }}>
+                                        <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1" }} />
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td colSpan={2} style={{ padding: 0, height: "4px" }} />
+                                    </tr>
+                                    <tr>
+                                      <td colSpan={2} style={{ padding: 0 }}>
+                                        <span style={{ fontSize: "8px", fontWeight: "800", color: "#64748b", letterSpacing: "0.3px", fontFamily: "Arial, Helvetica, sans-serif", display: "block" }}>
+                                          Harmonize. Optimize. Trust.
+                                        </span>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+
+                              {/* NRS Logo on the Right */}
+                              <div style={{ userSelect: "none", width: "190px" }}>
+                                <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
+                                  <tbody>
+                                    <tr>
+                                      <td style={{ padding: 0, verticalAlign: "middle", width: "90px" }}>
+                                        <span style={{ fontSize: "38px", fontWeight: "900", color: "#56595e", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-0.5px", lineHeight: "1.1", display: "block" }}>
+                                          NRS
+                                        </span>
+                                      </td>
+                                      <td style={{ padding: 0, paddingLeft: "8px", verticalAlign: "middle", width: "100px" }}>
+                                        <div style={{ color: "#b12c1b", fontSize: "9px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
+                                          <div>NIGERIA</div>
+                                          <div>REVENUE</div>
+                                          <div>SERVICE</div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td colSpan={2} style={{ padding: 0, height: "6px" }} />
+                                    </tr>
+                                    <tr>
+                                      <td colSpan={2} style={{ padding: 0 }}>
+                                        <table style={{ width: "100%", borderCollapse: "collapse", border: "none", padding: 0, margin: 0 }}>
+                                          <tbody>
+                                            <tr>
+                                              <td style={{ padding: 0, width: "90px" }}>
+                                                <div style={{ height: "3px", backgroundColor: "#56595e" }} />
+                                              </td>
+                                              <td style={{ padding: 0, width: "8px" }} />
+                                              <td style={{ padding: 0, width: "92px" }}>
+                                                <div style={{ height: "3px", backgroundColor: "#b12c1b" }} />
+                                              </td>
+                                            </tr>
+                                          </tbody>
+                                        </table>
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
+
+                            </div>
+                            <div style={{ height: "1px", backgroundColor: "#e2e8f0", width: "100%" }} />
+                          </div>
+
+                          {/* Main Content Body */}
+                          <div style={{ flex: "1 1 0%", padding: "40px", display: "flex", flexDirection: "column", justifyContent: "space-between", position: "relative" }}>
                             
-                            {/* JRB Logo on the Left */}
-                            <div style={{ userSelect: "none", width: "190px" }}>
-                              <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
-                                <tbody>
-                                  <tr>
-                                    <td style={{ padding: 0, verticalAlign: "middle", width: "85px" }}>
-                                      <span style={{ fontSize: "38px", fontWeight: "900", color: "#008248", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-1.5px", lineHeight: "1.1", display: "block" }}>
-                                        JRB
-                                      </span>
-                                    </td>
-                                    <td style={{ padding: 0, paddingLeft: "8px", verticalAlign: "middle" }}>
-                                      <div style={{ color: "#1e293b", fontSize: "9px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                                        <div>JOINT</div>
-                                        <div>REVENUE</div>
-                                        <div>BOARD</div>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td colSpan={2} style={{ padding: 0, height: "6px" }} />
-                                  </tr>
-                                  <tr>
-                                    <td colSpan={2} style={{ padding: 0 }}>
-                                      <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1" }} />
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td colSpan={2} style={{ padding: 0, height: "4px" }} />
-                                  </tr>
-                                  <tr>
-                                    <td colSpan={2} style={{ padding: 0 }}>
-                                      <span style={{ fontSize: "8px", fontWeight: "800", color: "#64748b", letterSpacing: "0.3px", fontFamily: "Arial, Helvetica, sans-serif", display: "block" }}>
-                                        Harmonize. Optimize. Trust.
-                                      </span>
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
+                            {/* Diagonal Gold/Amber Sash in the Background on the Right */}
+                            <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", width: "320px", pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
+                              <svg style={{ width: "100%", height: "100%" }} viewBox="0 0 320 1023" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                {/* Shadow band */}
+                                <path d="M120 0 L180 0 L320 1023 L260 1023 Z" fill="#925f19" opacity="0.15" />
+                                {/* Main gold/amber gradient sash */}
+                                <path d="M160 0 L320 0 L320 1023 L80 1023 Z" fill="url(#adminSashGradient)" />
+                                <defs>
+                                  <linearGradient id="adminSashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#dfa344" />
+                                    <stop offset="60%" stopColor="#ca9130" />
+                                    <stop offset="100%" stopColor="#966318" />
+                                  </linearGradient>
+                                </defs>
+                              </svg>
                             </div>
 
-                            {/* NRS Logo on the Right */}
-                            <div style={{ userSelect: "none", width: "190px" }}>
-                              <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
-                                <tbody>
-                                  <tr>
-                                    <td style={{ padding: 0, verticalAlign: "middle", width: "90px" }}>
-                                      <span style={{ fontSize: "38px", fontWeight: "900", color: "#56595e", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-0.5px", lineHeight: "1.1", display: "block" }}>
-                                        NRS
-                                      </span>
-                                    </td>
-                                    <td style={{ padding: 0, paddingLeft: "8px", verticalAlign: "middle", width: "100px" }}>
-                                      <div style={{ color: "#b12c1b", fontSize: "9px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                                        <div>NIGERIA</div>
-                                        <div>REVENUE</div>
-                                        <div>SERVICE</div>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td colSpan={2} style={{ padding: 0, height: "6px" }} />
-                                  </tr>
-                                  <tr>
-                                    <td colSpan={2} style={{ padding: 0 }}>
-                                      <table style={{ width: "100%", borderCollapse: "collapse", border: "none", padding: 0, margin: 0 }}>
-                                        <tbody>
-                                          <tr>
-                                            <td style={{ padding: 0, width: "90px" }}>
-                                              <div style={{ height: "3px", backgroundColor: "#56595e" }} />
-                                            </td>
-                                            <td style={{ padding: 0, width: "8px" }} />
-                                            <td style={{ padding: 0, width: "92px" }}>
-                                              <div style={{ height: "3px", backgroundColor: "#b12c1b" }} />
-                                            </td>
-                                          </tr>
-                                        </tbody>
-                                      </table>
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
+                            {/* Title */}
+                            <div style={{ zIndex: 10, marginTop: "8px", userSelect: "none" }}>
+                              <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#111111", textTransform: "uppercase", letterSpacing: "0.025em", margin: 0 }}>
+                                NON INDIVIDUAL TAX ID RETRIEVAL
+                              </h2>
                             </div>
 
-                          </div>
-                          <div style={{ height: "1px", backgroundColor: "#e2e8f0", width: "100%" }} />
-                        </div>
+                            {/* Box 1: Company Details and Circular Overlapping Badge */}
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "stretch", gap: "24px", zIndex: 10, marginTop: "12px", position: "relative" }}>
+                              
+                              {/* Left Side: Solid details box with thin black border */}
+                              <div style={{ flex: "1 1 0%", backgroundColor: "#ffffff", border: "1px solid #000000", padding: "32px", position: "relative" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                  <tbody>
+                                    <tr>
+                                      <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Company Name:</td>
+                                      <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                                        {generatedSlip.taxpayerName}
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>RC:</td>
+                                      <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                                        {generatedSlip.cacNumber}
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Tax ID:</td>
+                                      <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                                        {generatedSlip.tin}
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top" }}>Business Address:</td>
+                                      <td style={{ width: "65%", fontSize: "15px", fontWeight: "700", color: "#334155", textTransform: "uppercase", lineHeight: "1.5", verticalAlign: "top", wordBreak: "break-word" }}>
+                                        {generatedSlip.registeredAddress}
+                                      </td>
+                                    </tr>
+                                  </tbody>
+                                </table>
+                              </div>
 
-                        {/* Main Content Body */}
-                        <div style={{ flex: "1 1 0%", padding: "40px", display: "flex", flexDirection: "column", justifyBox: "space-between", position: "relative" }}>
-                          
-                          {/* Diagonal Gold/Amber Sash in the Background on the Right */}
-                          <div style={{ position: "absolute", top: 0, bottom: 0, right: 0, height: "100%", width: "320px", pointerEvents: "none", zIndex: 0, overflow: "hidden" }}>
-                            <svg style={{ width: "100%", height: "100%" }} viewBox="0 0 320 1023" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              {/* Shadow band */}
-                              <path d="M120 0 L180 0 L320 1023 L260 1023 Z" fill="#925f19" opacity="0.15" />
-                              {/* Main gold/amber gradient sash */}
-                              <path d="M160 0 L320 0 L320 1023 L80 1023 Z" fill="url(#adminSashGradient)" />
-                              <defs>
-                                <linearGradient id="adminSashGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                  <stop offset="0%" stopColor="#dfa344" />
-                                  <stop offset="60%" stopColor="#ca9130" />
-                                  <stop offset="100%" stopColor="#966318" />
-                                </linearGradient>
-                              </defs>
-                            </svg>
-                          </div>
-
-                          {/* Title */}
-                          <div style={{ zIndex: 10, marginTop: "8px", userSelect: "none" }}>
-                            <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#111111", textTransform: "uppercase", letterSpacing: "0.025em", margin: 0 }}>
-                              NON INDIVIDUAL TAX ID RETRIEVAL
-                            </h2>
-                          </div>
-
-                          {/* Box 1: Company Details and Circular Overlapping Badge */}
-                          <div style={{ display: "flex", flexDirection: "row", alignItems: "stretch", gap: "24px", zIndex: 10, marginTop: "12px", position: "relative" }}>
-                            
-                            {/* Left Side: Solid details box with thin black border */}
-                            <div style={{ flex: "1 1 0%", backgroundColor: "#ffffff", border: "1px solid #000000", padding: "32px", position: "relative" }}>
-                              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                                <tbody>
-                                  <tr>
-                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Company Name:</td>
-                                    <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
-                                      {generatedSlip.taxpayerName}
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>RC:</td>
-                                    <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
-                                      {generatedSlip.cacNumber}
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Tax ID:</td>
-                                    <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
-                                      {generatedSlip.tin}
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top" }}>Business Address:</td>
-                                    <td style={{ width: "65%", fontSize: "15px", fontWeight: "700", color: "#334155", textTransform: "uppercase", lineHeight: "1.5", verticalAlign: "top", wordBreak: "break-word" }}>
-                                      {generatedSlip.registeredAddress}
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-
-                            {/* Right Side Width Space for Circular Badge */}
-                            <div style={{ width: "128px", flexShrink: 0, display: "flex", alignItems: "center", justifyBox: "center", position: "relative", userSelect: "none" }}>
-                              {/* The Green Circular Badge overlapping Box 1 right boundary */}
-                              <div style={{ position: "absolute", right: "-10px", width: "192px", height: "192px", borderRadius: "50%", backgroundColor: "#1b552b", border: "8px solid #c08d2d", display: "flex", alignItems: "center", justifyBox: "center", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)", zIndex: 20 }}>
-                                <div style={{ width: "128px", height: "128px", backgroundColor: "#ffffff", padding: "10px", borderRadius: "16px", display: "flex", alignItems: "center", justifyBox: "center", overflow: "hidden" }}>
-                                  <QRCodeSVG
-                                    value="https://taxid.nrs.gov.ng/"
-                                    size={110}
-                                    level="M"
-                                    includeMargin={false}
-                                  />
+                              {/* Right Side Width Space for Circular Badge */}
+                              <div style={{ width: "128px", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", position: "relative", userSelect: "none" }}>
+                                {/* The Green Circular Badge overlapping Box 1 right boundary */}
+                                <div style={{ position: "absolute", right: "-10px", width: "192px", height: "192px", borderRadius: "50%", backgroundColor: "#1b552b", border: "8px solid #c08d2d", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)", zIndex: 20 }}>
+                                  <div style={{ width: "128px", height: "128px", backgroundColor: "#ffffff", padding: "10px", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                                    <QRCodeSVG
+                                      value="https://taxid.nrs.gov.ng/"
+                                      size={110}
+                                      level="M"
+                                      includeMargin={false}
+                                    />
+                                  </div>
                                 </div>
                               </div>
+
                             </div>
 
-                          </div>
-
-                          {/* Box 2: Verification Welcome and Direct Action */}
-                          <div style={{ border: "1px solid #000000", backgroundColor: "#ffffff", padding: "32px", position: "relative", zIndex: 10, display: "flex", flexDirection: "row", gap: "20px", alignItems: "flex-start", marginTop: "24px" }}>
-                            
-                            {/* Green Round Check Icon */}
-                            <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#1e7e34", display: "flex", alignItems: "center", justifyBox: "center", color: "#ffffff", fontWeight: "bold", fontSize: "18px", flexShrink: 0, userSelect: "none" }}>
-                              ✓
-                            </div>
-
-                            {/* Message Blocks */}
-                            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                              <h4 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", lineHeight: "1.25", fontFamily: "Georgia, serif", margin: 0 }}>
-                                Hello, {generatedSlip.taxpayerName}
-                              </h4>
+                            {/* Box 2: Verification Welcome and Direct Action */}
+                            <div style={{ border: "1px solid #000000", backgroundColor: "#ffffff", padding: "32px", position: "relative", zIndex: 10, display: "flex", flexDirection: "row", gap: "20px", alignItems: "flex-start", marginTop: "24px" }}>
                               
-                              <ul style={{ display: "flex", flexDirection: "column", gap: "14px", margin: 0, padding: 0, listStyle: "none" }}>
-                                
-                                <li style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
-                                  <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
-                                  <span>Your RC Number has been successfully verified and matches a Tax-ID in our system</span>
-                                </li>
-                                
-                                <li style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                                  <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
-                                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
-                                    <span>Your Tax ID is <strong style={{ fontWeight: "800", color: "#0f172a", fontFamily: "monospace", fontSize: "16px", marginLeft: "4px" }}>{generatedSlip.tin}</strong></span>
-                                  </div>
-                                </li>
+                              {/* Green Round Check Icon */}
+                              <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: "#1e7e34", display: "flex", alignItems: "center", justifyContent: "center", color: "#ffffff", fontWeight: "bold", fontSize: "18px", flexShrink: 0, userSelect: "none" }}>
+                                ✓
+                              </div>
 
-                              </ul>
+                              {/* Message Blocks */}
+                              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                                <h4 style={{ fontSize: "20px", fontWeight: "700", color: "#0f172a", lineHeight: "1.25", fontFamily: "Georgia, serif", margin: 0 }}>
+                                  Hello, {generatedSlip.taxpayerName}
+                                </h4>
+                                
+                                <ul style={{ display: "flex", flexDirection: "column", gap: "14px", margin: 0, padding: 0, listStyle: "none" }}>
+                                  
+                                  <li style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
+                                    <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
+                                    <span>Your RC Number has been successfully verified and matches a Tax-ID in our system</span>
+                                  </li>
+                                  
+                                  <li style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                                    <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
+                                      <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
+                                      <span>Your Tax ID is <strong style={{ fontWeight: "800", color: "#0f172a", fontFamily: "monospace", fontSize: "16px", marginLeft: "4px" }}>{generatedSlip.tin}</strong></span>
+                                    </div>
+                                  </li>
+
+                                </ul>
+                              </div>
+
+                            </div>
+
+                            {/* Disclaimer Consent text and Reset trigger */}
+                            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: "32px", zIndex: 10, position: "relative" }}>
+                              
+                              <p style={{ fontSize: "12px", color: "#475569", fontWeight: "500", maxWidth: "500px", lineHeight: "1.52", margin: 0, userSelect: "none" }}>
+                                I hereby consent to the processing of my information for tax-related identity verification.
+                              </p>
+
                             </div>
 
                           </div>
 
-                          {/* Disclaimer Consent text and Reset trigger */}
-                          <div style={{ display: "flex", flexDirection: "row", alignItems: "center", justifyBox: "space-between", marginTop: "32px", zIndex: 10, position: "relative" }}>
-                            
-                            <p style={{ fontSize: "12px", color: "#475569", fontWeight: "500", maxWidth: "500px", lineHeight: "1.52", margin: 0, userSelect: "none" }}>
-                              I hereby consent to the processing of my information for tax-related identity verification.
-                            </p>
-
-                          </div>
+                          {/* Solid Green Bottom Bar */}
+                          <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
 
                         </div>
-
-                        {/* Solid Green Bottom Bar */}
-                        <div style={{ width: "100%", height: "32px", backgroundColor: "#1a5f35", flexShrink: 0 }} />
-
                       </div>
 
                     </div>
