@@ -288,12 +288,107 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setGeneratedSlip(mockSlip);
   };
 
+  const convertOklchToRgb = (colorStr: string): string => {
+    if (!colorStr || typeof colorStr !== 'string') return colorStr;
+    if (!colorStr.includes('oklch')) return colorStr;
+    try {
+      return colorStr.replace(/oklch\([^)]+\)/g, (match) => {
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 1;
+          canvas.height = 1;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return match;
+          ctx.fillStyle = match;
+          ctx.fillRect(0, 0, 1, 1);
+          const [r, g, b, a] = ctx.getImageData(0, 0, 1, 1).data;
+          return `rgba(${r}, ${g}, ${b}, ${a / 255})`;
+        } catch (e) {
+          return match;
+        }
+      });
+    } catch (e) {
+      return colorStr;
+    }
+  };
+
   const handleAdminDownloadPDF = async () => {
     if (!generatedSlip) return;
     if (!adminCertificateRef.current) return;
     setAdminDownloading(true);
 
+    // Stash original descriptors/functions to restore in finally block
+    const originalCssRulesDescriptor = Object.getOwnPropertyDescriptor(CSSStyleSheet.prototype, "cssRules");
+    const originalGetComputedStyle = window.getComputedStyle;
+
     try {
+      // 1. Temporary patch for CSSStyleSheet.prototype.cssRules on the main window
+      Object.defineProperty(CSSStyleSheet.prototype, "cssRules", {
+        get() {
+          try {
+            const rules = originalCssRulesDescriptor && originalCssRulesDescriptor.get
+              ? originalCssRulesDescriptor.get.call(this)
+              : this.cssRules;
+            if (!rules) return rules;
+
+            const filtered: CSSRule[] = [];
+            for (let i = 0; i < rules.length; i++) {
+              const rule = rules[i];
+              if (rule && rule.cssText && rule.cssText.includes("oklch")) {
+                continue; // Skip rules with oklch to prevent html2canvas parsing crash
+              }
+              filtered.push(rule);
+            }
+
+            // Return custom array-like Proxy for html2canvas rule iterator
+            return new Proxy(rules, {
+              get(target, prop) {
+                if (prop === "length") {
+                  return filtered.length;
+                }
+                if (typeof prop === "string" && !isNaN(Number(prop))) {
+                  return filtered[Number(prop)];
+                }
+                if (prop === "item") {
+                  return (index: number) => filtered[index];
+                }
+                const val = (target as any)[prop];
+                return typeof val === "function" ? val.bind(target) : val;
+              },
+            });
+          } catch (e) {
+            return [];
+          }
+        },
+        configurable: true,
+      });
+
+      // 2. Temporary patch for window.getComputedStyle on the main window
+      window.getComputedStyle = function (el, pseudoElt) {
+        const styleObj = originalGetComputedStyle.call(window, el, pseudoElt);
+        return new Proxy(styleObj, {
+          get(target, prop) {
+            const val = target[prop as any];
+            if (typeof val === "function") {
+              if (prop === "getPropertyValue") {
+                return function (name: string) {
+                  const originalVal = target.getPropertyValue(name);
+                  if (originalVal && typeof originalVal === "string" && originalVal.includes("oklch")) {
+                    return convertOklchToRgb(originalVal);
+                  }
+                  return originalVal;
+                };
+              }
+              return val.bind(target);
+            }
+            if (val && typeof val === "string" && val.includes("oklch")) {
+              return convertOklchToRgb(val);
+            }
+            return val;
+          },
+        });
+      };
+
       const element = adminCertificateRef.current;
       
       let canvas;
@@ -305,7 +400,36 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           backgroundColor: "#ffffff",
           onclone: (clonedDoc) => {
             try {
-              // 1. Process style tags to strip oklch declarations
+              // 1. Setup oklch parser and computedStyle proxy in the iframe window
+              if (clonedDoc.defaultView) {
+                const originalGetComputedStyle = clonedDoc.defaultView.getComputedStyle;
+                clonedDoc.defaultView.getComputedStyle = function(el, pseudoElt) {
+                  const styleObj = originalGetComputedStyle.call(clonedDoc.defaultView, el, pseudoElt);
+                  return new Proxy(styleObj, {
+                    get(target, prop) {
+                      let val = target[prop as any];
+                      if (typeof val === 'function') {
+                        if (prop === 'getPropertyValue') {
+                          return function(name: string) {
+                            let originalVal = target.getPropertyValue(name);
+                            if (originalVal && typeof originalVal === 'string' && originalVal.includes('oklch')) {
+                              return convertOklchToRgb(originalVal);
+                            }
+                            return originalVal;
+                          }
+                        }
+                        return val.bind(target);
+                      }
+                      if (val && typeof val === 'string' && val.includes('oklch')) {
+                        return convertOklchToRgb(val);
+                      }
+                      return val;
+                    }
+                  });
+                };
+              }
+
+              // 2. Process style tags to strip oklch declarations
               const styleTags = clonedDoc.querySelectorAll("style");
               styleTags.forEach((style) => {
                 if (style.innerHTML && style.innerHTML.includes("oklch")) {
@@ -313,7 +437,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }
               });
 
-              // 2. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
+              // 3. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
               for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
                 try {
                   const sheet = clonedDoc.styleSheets[i];
@@ -354,9 +478,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }
 
                 // Force standard colors on elements to prevent rendering issues due to stripped stylesheets
-                const elements = el.querySelectorAll("*");
+                const elements = [el, ...Array.from(el.querySelectorAll("*"))];
                 elements.forEach((node) => {
                   const htmlNode = node as HTMLElement;
+                  
+                  // Convert inline styles
+                  if (htmlNode.style) {
+                    const inlineStyle = htmlNode.getAttribute("style");
+                    if (inlineStyle && inlineStyle.includes("oklch")) {
+                      htmlNode.setAttribute("style", convertOklchToRgb(inlineStyle));
+                    }
+                  }
+
                   if (htmlNode.className) {
                     if (htmlNode.className.includes("text-slate-900")) htmlNode.style.color = "#0f172a";
                     if (htmlNode.className.includes("text-slate-950")) htmlNode.style.color = "#030712";
@@ -383,7 +516,36 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           backgroundColor: "#ffffff",
           onclone: (clonedDoc) => {
             try {
-              // 1. Process style tags to strip oklch declarations
+              // 1. Setup oklch parser and computedStyle proxy in the iframe window
+              if (clonedDoc.defaultView) {
+                const originalGetComputedStyle = clonedDoc.defaultView.getComputedStyle;
+                clonedDoc.defaultView.getComputedStyle = function(el, pseudoElt) {
+                  const styleObj = originalGetComputedStyle.call(clonedDoc.defaultView, el, pseudoElt);
+                  return new Proxy(styleObj, {
+                    get(target, prop) {
+                      let val = target[prop as any];
+                      if (typeof val === 'function') {
+                        if (prop === 'getPropertyValue') {
+                          return function(name: string) {
+                            let originalVal = target.getPropertyValue(name);
+                            if (originalVal && typeof originalVal === 'string' && originalVal.includes('oklch')) {
+                              return convertOklchToRgb(originalVal);
+                            }
+                            return originalVal;
+                          }
+                        }
+                        return val.bind(target);
+                      }
+                      if (val && typeof val === 'string' && val.includes('oklch')) {
+                        return convertOklchToRgb(val);
+                      }
+                      return val;
+                    }
+                  });
+                };
+              }
+
+              // 2. Process style tags to strip oklch declarations
               const styleTags = clonedDoc.querySelectorAll("style");
               styleTags.forEach((style) => {
                 if (style.innerHTML && style.innerHTML.includes("oklch")) {
@@ -391,7 +553,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }
               });
 
-              // 2. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
+              // 3. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
               for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
                 try {
                   const sheet = clonedDoc.styleSheets[i];
@@ -432,9 +594,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 }
 
                 // Force standard colors on elements to prevent rendering issues due to stripped stylesheets
-                const elements = el.querySelectorAll("*");
+                const elements = [el, ...Array.from(el.querySelectorAll("*"))];
                 elements.forEach((node) => {
                   const htmlNode = node as HTMLElement;
+                  
+                  // Convert inline styles
+                  if (htmlNode.style) {
+                    const inlineStyle = htmlNode.getAttribute("style");
+                    if (inlineStyle && inlineStyle.includes("oklch")) {
+                      htmlNode.setAttribute("style", convertOklchToRgb(inlineStyle));
+                    }
+                  }
+
                   if (htmlNode.className) {
                     if (htmlNode.className.includes("text-slate-900")) htmlNode.style.color = "#0f172a";
                     if (htmlNode.className.includes("text-slate-950")) htmlNode.style.color = "#030712";
@@ -476,6 +647,12 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       console.error("PDF generation failed:", err);
       alert(`An error occurred while compiling your PDF: ${err instanceof Error ? err.message : String(err)}. Please try again or use the print option.`);
     } finally {
+      // Restore oklch patches
+      if (originalCssRulesDescriptor) {
+        Object.defineProperty(CSSStyleSheet.prototype, "cssRules", originalCssRulesDescriptor);
+      }
+      window.getComputedStyle = originalGetComputedStyle;
+
       setAdminDownloading(false);
     }
   };

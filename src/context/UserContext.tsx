@@ -1141,6 +1141,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: updatedMessages })
         });
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
         const resData = await response.json();
         
         const aiMsg: ChatMessage = {
@@ -1165,7 +1168,44 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
         saveSupportChatToSupabase(finalChat).catch(err => console.warn("Error saving AI chat response to Supabase:", err));
       } catch (err) {
-        console.warn("AI support chat connection issue:", err);
+        console.warn("AI support chat connection issue, using client-side fallback:", err);
+        // Direct local client-side fallback to ensure user always gets feedback!
+        const lastUserMessage = (userMsg.text || "").toLowerCase();
+        let fallbackReply = "Hello! I am your NRS/JTB digital support assistant. I can help with any questions regarding your TIN slips, subscriptions, or payments.";
+        
+        if (lastUserMessage.includes("pay") || lastUserMessage.includes("fund") || lastUserMessage.includes("price") || lastUserMessage.includes("cost") || lastUserMessage.includes("amount") || lastUserMessage.includes("sub") || lastUserMessage.includes("money") || lastUserMessage.includes("fee") || lastUserMessage.includes("charge")) {
+          fallbackReply = "Our pricing plans include the 24-Hour Trial (first slip is ₦100), Starter On-Demand (₦750 per slip), Basic (₦2,500/month), Premium (₦5,000/month), and Unlimited (₦10,000/month). You can upgrade or top up your wallet inside the Billing section.";
+        } else if (lastUserMessage.includes("admin") || lastUserMessage.includes("owner")) {
+          fallbackReply = "For security and advanced administrative approvals, our support team monitors this channel and can assist you directly. Please let us know what you need help with.";
+        } else if (lastUserMessage.includes("cac") || lastUserMessage.includes("official") || lastUserMessage.includes("partner") || lastUserMessage.includes("government")) {
+          fallbackReply = "Please note that taxidpdf.com is an independent third-party helper portal. We are not official partners of CAC, JTB, or NRS, and we utilize public information to generate high-quality slips.";
+        } else if (lastUserMessage.includes("expire") || lastUserMessage.includes("30-day") || lastUserMessage.includes("30 days") || lastUserMessage.includes("reset")) {
+          fallbackReply = "Each subscription plan expires exactly after 30 days, at which time any remaining unused wallet balance is reset to 0. You can easily purchase a new plan inside the Billing section!";
+        } else if (lastUserMessage.includes("uncredited") || lastUserMessage.includes("debit") || lastUserMessage.includes("not credited") || lastUserMessage.includes("topup") || lastUserMessage.includes("transfer") || lastUserMessage.includes("manual")) {
+          fallbackReply = "If you were debited but not credited due to a network delay, please click the 'Report Uncredited Payment' button or provide your payment reference so our support team can credit you manually.";
+        }
+
+        const aiMsg: ChatMessage = {
+          id: `msg-${Math.random().toString(36).substr(2, 9)}`,
+          sender: "ai",
+          text: fallbackReply,
+          date: new Date().toISOString()
+        };
+
+        const finalChat: SupportChat = {
+          ...updatedChat,
+          messages: [...updatedMessages, aiMsg],
+          lastUpdated: new Date().toISOString()
+        };
+
+        setSupportChats((prev) => {
+          const filtered = prev.filter((c) => c.userId !== userId);
+          const newChats = [finalChat, ...filtered];
+          localStorage.setItem(CHATS_KEY, JSON.stringify(newChats));
+          return newChats;
+        });
+
+        saveSupportChatToSupabase(finalChat).catch(e => console.warn("Error saving fallback chat response to Supabase:", e));
       }
     }
   };
