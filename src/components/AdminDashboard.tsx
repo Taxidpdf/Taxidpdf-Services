@@ -135,8 +135,30 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [generatedSlip, setGeneratedSlip] = useState<SavedSlip | null>(null);
 
   const adminCertificateRef = useRef<HTMLDivElement>(null);
+  const adminContainerRef = useRef<HTMLDivElement>(null);
+  const [adminScale, setAdminScale] = useState(1);
   const [adminDownloading, setAdminDownloading] = useState(false);
   const [adminCopied, setAdminCopied] = useState(false);
+
+  React.useEffect(() => {
+    const updateScale = () => {
+      if (adminContainerRef.current) {
+        const width = adminContainerRef.current.getBoundingClientRect().width;
+        const padding = window.innerWidth < 640 ? 16 : 48;
+        const availableWidth = width - padding;
+        const newScale = Math.min(1, availableWidth / 794);
+        setAdminScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    const timer = setTimeout(updateScale, 150);
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      clearTimeout(timer);
+    };
+  }, [generatedSlip]);
 
   // Password Unlock Check
   const handleUnlock = (e: React.FormEvent) => {
@@ -328,7 +350,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           try {
             const rules = originalCssRulesDescriptor && originalCssRulesDescriptor.get
               ? originalCssRulesDescriptor.get.call(this)
-              : this.cssRules;
+              : [];
             if (!rules) return rules;
 
             const filtered: CSSRule[] = [];
@@ -1643,7 +1665,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     {/* Certificate Display Screen */}
-                    <div className="flex justify-center overflow-x-auto bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-inner">
+                    <div ref={adminContainerRef} className="flex justify-center w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-inner overflow-hidden">
                       {/* Printable Style Injector */}
                        <style>{`
                         @media print {
@@ -1680,12 +1702,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         }
                       `}</style>
                       
-                      {/* Wrap the printable area with a helper parent exactly like in CertificatePreview to avoid html2canvas positioning bugs */}
-                      <div style={{ width: "794px", height: "1123px", position: "relative" }} className="shrink-0">
-                        {/* The Actual Printable JTB National TIN Certificate Slip */}
+                      {/* Aspect-ratio-fitting scale wrapper for high fidelity preview without horizontal scrolling */}
+                      <div 
+                        style={{ 
+                          height: `${1123 * adminScale}px`, 
+                          width: `${794 * adminScale}px`,
+                          position: "relative"
+                        }} 
+                        className="shrink-0 transition-all duration-300"
+                      >
+                        {/* Scale wrapper so the printable-area doesn't have the transform scale in the DOM structure */}
                         <div
-                          id="admin-printable-area"
-                          ref={adminCertificateRef}
+                          style={{
+                            transform: `scale(${adminScale})`,
+                            transformOrigin: "top left",
+                            width: "794px",
+                            height: "1123px",
+                            position: "absolute",
+                            left: 0,
+                            top: 0
+                          }}
+                        >
+                          {/* The Actual Printable JTB National TIN Certificate Slip */}
+                          <div
+                            id="admin-printable-area"
+                            ref={adminCertificateRef}
                           className="w-[794px] h-[1123px] shrink-0 overflow-hidden"
                           style={{
                             fontFamily: "'Inter', sans-serif",
@@ -1922,6 +1963,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
                         </div>
                       </div>
+                    </div>
 
                     </div>
 

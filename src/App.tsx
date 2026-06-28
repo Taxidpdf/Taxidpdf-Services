@@ -189,7 +189,7 @@ export default function App() {
                       <div className="space-y-4">
                         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight font-sans" id="hero-title-inner">
                           {(() => {
-                            const title = portalSettings.landingTitle || "Download your JTB TIN Slip securely.";
+                            const title = portalSettings.landingTitle || "Download your JTB TIN Slip as PDF securely.";
                             const lowerTitle = title.toLowerCase();
                             const target = "securely.";
                             if (lowerTitle.includes(target)) {

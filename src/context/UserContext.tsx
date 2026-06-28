@@ -66,7 +66,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
   unlimitedFee: 10000,
   basicLimit: 5,
   premiumLimit: 50,
-  landingTitle: "Download your JTB TIN Slip securely.",
+  landingTitle: "Download your JTB TIN Slip as PDF securely.",
   landingDescription: "Need a physical copy of your Tax Identification Number? Use our secure portal to query the Joint Tax Board (JTB) registers, format your particulars, and generate your high-quality PDF slip ready for printing.",
   disclaimerText: "Disclaimer: taxidpdf.com operates solely as a third-party helper wrapper facilitating official tax database queries. We do not issue corporate TIN registrations or represent state boards. All original ownership is preserved with the Nigeria Revenue Services (NRS) and the Joint Tax Board (JTB) of Nigeria. For profile rectifications, please approach authorized physical state board offices. This is an independent third-party website to make CAC agents and business owners generate JTB/NRS TIN slips as shown on the official website https://taxid.nrs.gov.ng/. We only work with the information available publicly on this website.",
   supportEmail: "support@taxidpf.com",
@@ -222,8 +222,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       try {
         const parsed = JSON.parse(storedSettings);
         if (parsed && typeof parsed === "object") {
-          if (parsed.landingTitle === "Download your JTB TIN Slip instantly.") {
-            parsed.landingTitle = "Download your JTB TIN Slip securely.";
+          if (parsed.landingTitle === "Download your JTB TIN Slip instantly." || parsed.landingTitle === "Download your JTB TIN Slip securely.") {
+            parsed.landingTitle = "Download your JTB TIN Slip as PDF securely.";
           }
           const defaultFaqs = DEFAULT_SETTINGS.faqs;
           const mergedFaqs = [...(parsed.faqs || DEFAULT_SETTINGS.faqs)];

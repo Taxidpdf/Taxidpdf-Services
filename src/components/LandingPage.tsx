@@ -30,13 +30,13 @@ import {
 } from "lucide-react";
 
 export function RotatingWord() {
-  const words = ["instantly.", "securely.", "seamlessly.", "directly.", "easily."];
+  const words = ["instantly.", "securely.", "in High-Quality.", "directly.", "effortlessly."];
   const colors = [
-    "#00B074", // elegant emerald green
-    "#F48120", // attention orange
-    "#521753", // attention deep violet/purple
-    "#2563EB", // royal blue
-    "#D946EF"  // magenta/fuchsia
+    "#008248", // Official JTB emerald green
+    "#ca9130", // Rich JTB gold
+    "#b12c1b", // Official NRS deep crimson
+    "#2563eb", // Vibrant corporate blue
+    "#0f172a"  // Elegant deep slate
   ];
   const [index, setIndex] = useState(0);
 
@@ -393,7 +393,7 @@ export default function LandingPage() {
         </motion.div>
 
         <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-[84px] font-black text-slate-900 tracking-tighter leading-[1.02] font-sans max-w-5xl mx-auto" id="hero-title">
-          <EstherRevealHeadline text={portalSettings.landingTitle || "Download your JTB TIN Slip securely."} />
+          <EstherRevealHeadline text={portalSettings.landingTitle || "Download your JTB TIN Slip as PDF securely."} />
         </h1>
 
         {/* Centralized benefits & description section */}

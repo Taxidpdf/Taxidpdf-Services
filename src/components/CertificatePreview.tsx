@@ -160,7 +160,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
           try {
             const rules = originalCssRulesDescriptor && originalCssRulesDescriptor.get
               ? originalCssRulesDescriptor.get.call(this)
-              : this.cssRules;
+              : [];
             if (!rules) return rules;
 
             const filtered: CSSRule[] = [];
