@@ -81,6 +81,12 @@ app.use(express.json({
   }
 }));
 
+// List of candidate API keys, loaded securely from environment variables (never hardcoded to avoid Git leakage)
+const CANDIDATE_KEYS = (process.env.GEMINI_API_KEY || "")
+  .split(/[,\s]+/)
+  .map(k => k.trim())
+  .filter(k => k.length > 10 && k !== "MY_GEMINI_API_KEY");
+
 // Helper to check if a valid API key exists
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -182,16 +188,13 @@ app.post("/api/lookup", async (req, res) => {
 
   console.log(`[API] Tax ID lookup requested. Type: ${type}, Value: ${value}`);
 
-  const ai = getGeminiClient();
-
-  // If we don't have Gemini configured, use local generator
-  if (!ai) {
+  if (CANDIDATE_KEYS.length === 0) {
+    console.log("[API] No Gemini API keys configured. Using offline mock generator.");
     const data = generateLocalMockTaxpayer(type, value);
     return res.json(data);
   }
 
-  try {
-    const prompt = `
+  const prompt = `
 You are a government-certified tax officer integration system in Nigeria.
 The user wants to look up their National Tax Identification Number (TIN) profile from the Joint Tax Board (JTB) and Federal Inland Revenue Service (FIRS) database.
 
@@ -215,91 +218,116 @@ Requirements:
 Output strictly in JSON structure matching the schema.
 `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            taxpayerName: { type: Type.STRING },
-            tin: { type: Type.STRING },
-            category: { type: Type.STRING },
-            registeredAddress: { type: Type.STRING },
-            issuingAuthority: { type: Type.STRING },
-            phone: { type: Type.STRING },
-            email: { type: Type.STRING },
-            cacNumber: { type: Type.STRING },
-            registrationDate: { type: Type.STRING },
-            taxOffice: { type: Type.STRING },
-            activeStatus: { type: Type.STRING },
+  let lastErrorMsg = "";
+  for (const apiKey of CANDIDATE_KEYS) {
+    try {
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
           },
-          required: [
-            "taxpayerName",
-            "tin",
-            "category",
-            "registeredAddress",
-            "issuingAuthority",
-            "phone",
-            "email",
-            "registrationDate",
-            "taxOffice",
-            "activeStatus",
-          ],
         },
-      },
-    });
+      });
 
-    const text = response.text || "{}";
-    const data = JSON.parse(text.trim());
-    data.source = "Joint Tax Board (JTB) Cloud API";
-    return res.json(data);
-  } catch (err: any) {
-    console.error("Gemini Lookup Error, falling back to local:", err.message);
-    const data = generateLocalMockTaxpayer(type, value);
-    return res.json(data);
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              taxpayerName: { type: Type.STRING },
+              tin: { type: Type.STRING },
+              category: { type: Type.STRING },
+              registeredAddress: { type: Type.STRING },
+              issuingAuthority: { type: Type.STRING },
+              phone: { type: Type.STRING },
+              email: { type: Type.STRING },
+              cacNumber: { type: Type.STRING },
+              registrationDate: { type: Type.STRING },
+              taxOffice: { type: Type.STRING },
+              activeStatus: { type: Type.STRING },
+            },
+            required: [
+              "taxpayerName",
+              "tin",
+              "category",
+              "registeredAddress",
+              "issuingAuthority",
+              "phone",
+              "email",
+              "registrationDate",
+              "taxOffice",
+              "activeStatus",
+            ],
+          },
+        },
+      });
+
+      const text = response.text || "{}";
+      const data = JSON.parse(text.trim());
+      data.source = "Joint Tax Board (JTB) Cloud API";
+      return res.json(data);
+    } catch (err: any) {
+      console.warn(`Gemini Lookup key trial failed:`, err.message);
+      lastErrorMsg = err.message;
+    }
   }
+
+  console.error("All Gemini API keys failed for lookup. Fallback to local mock. Error:", lastErrorMsg);
+  const data = generateLocalMockTaxpayer(type, value);
+  return res.json(data);
 });
 
 // Smart helper function to generate realistic and context-rich support replies when Gemini is offline or fails
 function generateOfflineSupportReply(lastUserMessage: string): string {
-  const msg = lastUserMessage.trim().toLowerCase();
+  const msg = lastUserMessage.trim();
+  const lowercaseMsg = msg.toLowerCase();
 
-  if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greet") || msg.includes("good morning") || msg.includes("good afternoon") || msg.includes("good evening") || msg.includes("how far") || msg.includes("yo")) {
+  const hasWord = (words: string[]) => {
+    return words.some(word => {
+      const escaped = word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+      const regex = new RegExp(`\\b${escaped}\\b`, "i");
+      return regex.test(lowercaseMsg);
+    });
+  };
+
+  if (hasWord(["hello", "hi", "hey", "greet", "greeting", "greetings", "good morning", "good afternoon", "good evening", "how far", "yo"])) {
     return "Hello there! Welcome to taxidpdf.com support. I am your digital assistant, ready to assist you with JTB/NRS TIN slips, wallet funding, pricing plans, or manual payment approvals. How can I help you today?";
   }
   
-  if (msg.includes("who") || msg.includes("owner") || msg.includes("admin") || msg.includes("developer") || msg.includes("creator") || msg.includes("built") || msg.includes("franklin") || msg.includes("coach") || msg.includes("website")) {
+  if (hasWord(["who", "owner", "admin", "developer", "creator", "built", "franklin", "coach", "website"])) {
     return "taxidpdf.com is managed and operated by our dedicated Customer Support Team. We are an independent, third-party helper portal designed to automate the retrieval, formatting, and high-quality PDF generation of JTB and NRS TIN slips. How can we help you succeed today?";
   }
 
-  if (msg.includes("how to") || msg.includes("retrieve") || msg.includes("lookup") || msg.includes("generate") || msg.includes("find my") || msg.includes("get my") || msg.includes("slip") || msg.includes("pdf") || msg.includes("download") || msg.includes("register")) {
+  if (hasWord(["how to", "retrieve", "lookup", "generate", "find my", "get my", "slip", "slips", "pdf", "download", "downloads", "register"])) {
     return "To retrieve and download your TIN slip: 1. Log in or register an account. 2. Navigate to 'Search JTB TIN' or 'Search NRS TIN' from your dashboard. 3. Enter your search criteria (BVN, NIN, Phone, CAC Number, or Direct TIN). 4. After your profile is retrieved, make sure your wallet is funded to download the premium slip instantly!";
   }
 
-  if (msg.includes("pay") || msg.includes("fund") || msg.includes("price") || msg.includes("cost") || msg.includes("amount") || msg.includes("sub") || msg.includes("money") || msg.includes("fee") || msg.includes("charge")) {
+  if (hasWord(["pay", "payment", "fund", "funding", "price", "pricing", "cost", "amount", "sub", "subscription", "money", "fee", "fees", "charge", "charges", "wallet", "wallets"])) {
     return "Our affordable pricing plans are as follows:\n• **24-Hour Trial**: First slip download is ₦100 (available for 24 hours upon sign-up).\n• **Starter On-Demand**: ₦750 per single download thereafter.\n• **Basic Plan**: ₦2,500/month (includes 5 downloads).\n• **Premium Plan**: ₦5,000/month (includes 50 downloads).\n• **Unlimited Plan**: ₦10,000/month (unlimited downloads).\nYou can fund your wallet instantly using cards or automated transfer in the Billing section!";
   }
 
-  if (msg.includes("uncredited") || msg.includes("debit") || msg.includes("not credited") || msg.includes("topup") || msg.includes("transfer") || msg.includes("manual") || msg.includes("report")) {
+  if (hasWord(["uncredited", "debit", "debited", "not credited", "topup", "topups", "transfer", "transfers", "manual", "report"])) {
     return "If you were debited but not credited due to a network delay, please go to the **Billing** section and click the **'Report Uncredited Payment'** button. Submit your transaction details, and our support team will manually approve and credit your wallet in minutes!";
   }
 
-  if (msg.includes("cac") || msg.includes("official") || msg.includes("partner") || msg.includes("government") || msg.includes("firs") || msg.includes("board")) {
+  if (hasWord(["cac", "official", "partner", "government", "firs", "board"])) {
     return "Please note that taxidpdf.com is an independent third-party portal. We are NOT partners with, nor do we represent, the Joint Tax Board (JTB), Federal Inland Revenue Service (FIRS), CAC, or any state revenue agency. We use public databases to format highly accepted premium PDF slips.";
   }
 
-  if (msg.includes("expire") || msg.includes("30-day") || msg.includes("30 days") || msg.includes("reset") || msg.includes("wallet")) {
+  if (hasWord(["expire", "expires", "expiry", "30-day", "30 days", "reset"])) {
     return "All subscription plans and custom wallet balances expire exactly after 30 days, upon which any remaining downloads or wallet balance reset to 0. You can easily renew your subscription or upgrade inside the Billing section at any time!";
   }
 
-  if (msg.includes("human") || msg.includes("agent") || msg.includes("rep") || msg.includes("contact") || msg.includes("whatsapp") || msg.includes("phone number") || msg.includes("email") || msg.includes("live")) {
+  if (hasWord(["human", "agent", "agents", "rep", "contact", "whatsapp", "phone number", "email", "live"])) {
     return "Our human support agents are notified of all new support chat sessions! If you need direct help, please leave your specific request here, and an agent will join the chat room to assist you directly.";
   }
 
   // Dynamic fallback when Gemini is offline or throws errors
-  return `Thank you for asking! I'm here to assist you. Since you asked about "${lastUserMessage}", let me help you with that! I am operating in helper support mode. I can assist you with tax ID retrievals, wallet funding, pricing plans, downloads, or uncredited payment approvals. If you are asking a general-knowledge or coding question, please make sure your Gemini API key is active in the settings, so I can provide full real-time answers!`;
+  return `Thank you for asking! I'm here to assist you. Since you asked about "${lastUserMessage}", let me help you with that! I can assist you with tax ID retrievals, wallet funding, pricing plans, downloads, or uncredited payment approvals. If you are asking a general-knowledge or coding question, please make sure your Gemini API key is active in the settings, so I can provide full real-time answers!`;
 }
 
 // AI Customer Support Chat Route
@@ -310,7 +338,6 @@ app.post("/api/support-chat", async (req, res) => {
     return res.status(400).json({ error: "Messages array is required" });
   }
 
-  const ai = getGeminiClient();
   const conversationHistory = messages
     .map((m: any) => `${m.sender === "user" ? "Customer" : m.sender === "admin" ? "Support Agent" : "Support Rep (AI)"}: ${m.text}`)
     .join("\n");
@@ -343,28 +370,37 @@ ${conversationHistory}
 Response (Keep it conversational, warm, and professional, under 5 sentences):
 `;
 
-  if (!ai) {
-    const lastUserMessage = (messages[messages.length - 1]?.text || "");
-    const reply = generateOfflineSupportReply(lastUserMessage);
-    return res.json({ text: reply });
+  let lastErrorMsg = "";
+  // Try using each candidate key
+  for (const apiKey of CANDIDATE_KEYS) {
+    try {
+      const ai = new GoogleGenAI({
+        apiKey,
+        httpOptions: {
+          headers: {
+            "User-Agent": "aistudio-build",
+          },
+        },
+      });
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+      });
+      const generatedText = response.text?.trim();
+      if (generatedText) {
+        return res.json({ text: generatedText });
+      }
+    } catch (err: any) {
+      console.warn(`Gemini API key trial failed:`, err.message);
+      lastErrorMsg = err.message;
+    }
   }
 
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: prompt,
-    });
-    const generatedText = response.text?.trim();
-    if (!generatedText) {
-      throw new Error("Empty reply from Gemini model");
-    }
-    return res.json({ text: generatedText });
-  } catch (err: any) {
-    console.error("Gemini Support Chat Error, falling back to smart local responder:", err.message);
-    const lastUserMessage = (messages[messages.length - 1]?.text || "");
-    const reply = generateOfflineSupportReply(lastUserMessage);
-    return res.json({ text: reply });
-  }
+  // Fallback to smart local responder if all keys fail or list is empty
+  console.error("All Gemini API keys failed or were missing. Error:", lastErrorMsg);
+  const lastUserMessage = (messages[messages.length - 1]?.text || "");
+  const reply = generateOfflineSupportReply(lastUserMessage);
+  return res.json({ text: reply });
 });
 
 // =========================================================================

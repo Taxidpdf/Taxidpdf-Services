@@ -1171,24 +1171,34 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         console.warn("AI support chat connection issue, using client-side fallback:", err);
         // Direct local client-side fallback to ensure user always gets feedback!
         const lastUserMessage = (userMsg.text || "");
-        const msg = lastUserMessage.toLowerCase();
+        const msg = lastUserMessage.trim();
+        const lowercaseMsg = msg.toLowerCase();
+
+        const hasWord = (words: string[]) => {
+          return words.some(word => {
+            const escaped = word.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            const regex = new RegExp(`\\b${escaped}\\b`, "i");
+            return regex.test(lowercaseMsg);
+          });
+        };
+
         let fallbackReply = `Thank you for asking! I am operating in smart support mode. Since you asked about "${lastUserMessage}", I want to help! I can assist you with tax ID retrievals, wallet funding, pricing plans, downloads, or uncredited payment approvals. If you are asking a general-knowledge or coding question, please make sure your Gemini API key is active in the settings, so I can provide full real-time answers!`;
         
-        if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greet") || msg.includes("good morning") || msg.includes("good afternoon") || msg.includes("good evening") || msg.includes("how far") || msg.includes("yo")) {
+        if (hasWord(["hello", "hi", "hey", "greet", "greeting", "greetings", "good morning", "good afternoon", "good evening", "how far", "yo"])) {
           fallbackReply = "Hello there! Welcome to taxidpdf.com support. I am your digital assistant, ready to assist you with JTB/NRS TIN slips, wallet funding, pricing plans, or manual payment approvals. How can I help you today?";
-        } else if (msg.includes("who") || msg.includes("owner") || msg.includes("admin") || msg.includes("developer") || msg.includes("creator") || msg.includes("built") || msg.includes("franklin") || msg.includes("coach") || msg.includes("website")) {
+        } else if (hasWord(["who", "owner", "admin", "developer", "creator", "built", "franklin", "coach", "website"])) {
           fallbackReply = "taxidpdf.com is managed and operated by our dedicated Customer Support Team. We are an independent, third-party helper portal designed to automate the retrieval, formatting, and high-quality PDF generation of JTB and NRS TIN slips. How can we help you succeed today?";
-        } else if (msg.includes("how to") || msg.includes("retrieve") || msg.includes("lookup") || msg.includes("generate") || msg.includes("find my") || msg.includes("get my") || msg.includes("slip") || msg.includes("pdf") || msg.includes("download") || msg.includes("register")) {
+        } else if (hasWord(["how to", "retrieve", "lookup", "generate", "find my", "get my", "slip", "slips", "pdf", "download", "downloads", "register"])) {
           fallbackReply = "To retrieve and download your TIN slip: 1. Log in or register an account. 2. Navigate to 'Search JTB TIN' or 'Search NRS TIN' from your dashboard. 3. Enter your search criteria (BVN, NIN, Phone, CAC Number, or Direct TIN). 4. After your profile is retrieved, make sure your wallet is funded to download the premium slip instantly!";
-        } else if (msg.includes("pay") || msg.includes("fund") || msg.includes("price") || msg.includes("cost") || msg.includes("amount") || msg.includes("sub") || msg.includes("money") || msg.includes("fee") || msg.includes("charge")) {
+        } else if (hasWord(["pay", "payment", "fund", "funding", "price", "pricing", "cost", "amount", "sub", "subscription", "money", "fee", "fees", "charge", "charges", "wallet", "wallets"])) {
           fallbackReply = "Our pricing plans include:\n• **24-Hour Trial**: First slip download is ₦100 (available for 24 hours upon sign-up).\n• **Starter On-Demand**: ₦750 per single download thereafter.\n• **Basic Plan**: ₦2,500/month (includes 5 downloads).\n• **Premium Plan**: ₦5,000/month (includes 50 downloads).\n• **Unlimited Plan**: ₦10,000/month (unlimited downloads).\nYou can fund your wallet instantly inside the Billing section!";
-        } else if (msg.includes("uncredited") || msg.includes("debit") || msg.includes("not credited") || msg.includes("topup") || msg.includes("transfer") || msg.includes("manual") || msg.includes("report")) {
+        } else if (hasWord(["uncredited", "debit", "debited", "not credited", "topup", "topups", "transfer", "transfers", "manual", "report"])) {
           fallbackReply = "If you were debited but your wallet was not credited due to a network delay, please click the 'Report Uncredited Payment' button in the Billing section to notify our support admin team for instant manual credit!";
-        } else if (msg.includes("cac") || msg.includes("official") || msg.includes("partner") || msg.includes("government") || msg.includes("firs") || msg.includes("board")) {
+        } else if (hasWord(["cac", "official", "partner", "government", "firs", "board"])) {
           fallbackReply = "Please note that taxidpdf.com is an independent third-party portal. We are NOT partners with, nor do we represent, the Joint Tax Board (JTB), Federal Inland Revenue Service (FIRS), CAC, or any government agency. We utilize public information to generate highly acceptable premium slips.";
-        } else if (msg.includes("expire") || msg.includes("30-day") || msg.includes("30 days") || msg.includes("reset") || msg.includes("wallet")) {
+        } else if (hasWord(["expire", "expires", "expiry", "30-day", "30 days", "reset"])) {
           fallbackReply = "Every subscription plan and wallet balance expires exactly after 30 days, at which time any unused credit/downloads are reset to 0. You can easily purchase a new plan inside the Billing section at any time!";
-        } else if (msg.includes("human") || msg.includes("agent") || msg.includes("rep") || msg.includes("contact") || msg.includes("whatsapp") || msg.includes("phone number") || msg.includes("email") || msg.includes("live")) {
+        } else if (hasWord(["human", "agent", "agents", "rep", "contact", "whatsapp", "phone number", "email", "live"])) {
           fallbackReply = "Our human support agents are notified of all chats! Feel free to leave your message here, and an agent will join the chat room to assist you shortly.";
         }
 
