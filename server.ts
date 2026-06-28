@@ -58,17 +58,24 @@ app.use((req, res, next) => {
   if (typeof proto === "string") {
     isSecure = isSecure || proto.split(",").map(p => p.trim().toLowerCase()).includes("https");
   }
+  
+  const forwardedPort = req.headers["x-forwarded-port"];
+  const isPortSecure = typeof forwardedPort === "string" 
+    ? forwardedPort === "443" 
+    : (Array.isArray(forwardedPort) ? forwardedPort.includes("443") : false);
+
   isSecure = isSecure || 
              req.headers["x-forwarded-ssl"] === "on" || 
              req.headers["front-end-https"] === "on" || 
-             req.headers["x-url-scheme"] === "https";
+             req.headers["x-url-scheme"] === "https" ||
+             isPortSecure;
 
   const isTaxIdPdfDomain = hostNameOnly === "taxidpdf.com" || hostNameOnly === "www.taxidpdf.com";
 
   if (isTaxIdPdfDomain) {
     // If request is HTTP OR the hostname is www.taxidpdf.com (non-canonical), redirect permanently (301) to https://taxidpdf.com
     if (!isSecure || hostNameOnly === "www.taxidpdf.com") {
-      console.log(`[Redirect] Redirecting non-secure or non-canonical request on ${hostHeader}${req.originalUrl} to https://taxidpdf.com${req.originalUrl}`);
+      console.log(`[Redirect] Redirecting non-secure or non-canonical request on ${hostHeader}${req.originalUrl} to https://taxidpdf.com${req.originalUrl}. Headers: proto=${proto}, secure=${req.secure}, port=${forwardedPort}`);
       return res.redirect(301, `https://taxidpdf.com${req.originalUrl}`);
     }
   } else if (!isSecure) {
