@@ -5,6 +5,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 dotenv.config();
 
@@ -13,28 +14,73 @@ const app = express();
 // Enable trust proxy so Express can read 'X-Forwarded-Proto' correctly behind reverse proxies (cPanel, Nginx, etc.)
 app.set("trust proxy", true);
 
+// Configure industrial-grade rate limiters for endpoint protection
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 150, // Limit each IP to 150 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: { error: "Too many requests from this IP, please try again after 15 minutes." }
+});
+
+const lookupLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // Max 10 searches per minute per IP to prevent taxpayer record scraping
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many lookup attempts. Please wait a moment before trying again." }
+});
+
+const chatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 15, // Max 15 chat messages per minute to prevent AI API key token exhaustion
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many support messages. Please wait a moment." }
+});
+
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Max 20 payments/virtual account generation attempts per 15 mins to block payment card testers
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many payment operations. Please try again after some time." }
+});
+
 // HTTP to HTTPS and Domain Canonicalization Middleware
 app.use((req, res, next) => {
-  const host = req.get("host") || "";
-  const lowercaseHost = host.toLowerCase();
+  const hostHeader = req.get("host") || "";
+  const hostNameOnly = hostHeader.split(":")[0].toLowerCase();
   
-  // Check if we are running on taxidpdf.com or www.taxidpdf.com
-  const isTaxIdPdfDomain = lowercaseHost.includes("taxidpdf.com");
+  // Robust check for HTTPS behind reverse proxies (Nginx, cPanel, Apache, Cloudflare)
+  let isSecure = req.secure;
+  const proto = req.headers["x-forwarded-proto"];
+  if (typeof proto === "string") {
+    isSecure = isSecure || proto.split(",").map(p => p.trim().toLowerCase()).includes("https");
+  }
+  isSecure = isSecure || 
+             req.headers["x-forwarded-ssl"] === "on" || 
+             req.headers["front-end-https"] === "on" || 
+             req.headers["x-url-scheme"] === "https";
 
-  // Determine protocol from secure property or x-forwarded-proto header
-  const isSecure = req.secure || req.headers["x-forwarded-proto"] === "https";
+  const isTaxIdPdfDomain = hostNameOnly === "taxidpdf.com" || hostNameOnly === "www.taxidpdf.com";
 
   if (isTaxIdPdfDomain) {
-    // If request is HTTP OR the hostname is www.taxidpdf.com (non-canonical), redirect permanently to https://taxidpdf.com
-    if (!isSecure || lowercaseHost !== "taxidpdf.com") {
-      console.log(`[Redirect] Redirecting non-secure/non-canonical request on ${host}${req.originalUrl} to https://taxidpdf.com${req.originalUrl}`);
+    // If request is HTTP OR the hostname is www.taxidpdf.com (non-canonical), redirect permanently (301) to https://taxidpdf.com
+    if (!isSecure || hostNameOnly === "www.taxidpdf.com") {
+      console.log(`[Redirect] Redirecting non-secure or non-canonical request on ${hostHeader}${req.originalUrl} to https://taxidpdf.com${req.originalUrl}`);
       return res.redirect(301, `https://taxidpdf.com${req.originalUrl}`);
     }
   } else if (!isSecure) {
     // For other production-like host domains, redirect HTTP to HTTPS, but exclude local/preview domains
-    const isLocalOrPreview = lowercaseHost === "localhost" || lowercaseHost.includes("127.0.0.1") || lowercaseHost.includes("3000") || lowercaseHost.includes(".run.app") || lowercaseHost.includes(".github.dev") || lowercaseHost.includes(".gitpod.io");
+    const isLocalOrPreview = hostNameOnly === "localhost" || 
+                             hostNameOnly.includes("127.0.0.1") || 
+                             hostNameOnly.includes("run.app") || 
+                             hostNameOnly.includes("github.dev") || 
+                             hostNameOnly.includes("gitpod.io");
     if (!isLocalOrPreview) {
-      return res.redirect(301, `https://${host}${req.originalUrl}`);
+      console.log(`[Redirect] Redirecting non-secure request on ${hostHeader}${req.originalUrl} to https://${hostHeader}${req.originalUrl}`);
+      return res.redirect(301, `https://${hostHeader}${req.originalUrl}`);
     }
   }
   
@@ -209,19 +255,32 @@ function generateLocalMockTaxpayer(type: string, value: string): any {
   };
 }
 
-// API endpoint to retrieve taxpayer details dynamically using Gemini
-app.post("/api/lookup", async (req, res) => {
+// API endpoint to retrieve taxpayer details dynamically using Gemini (Protected and Sanitized)
+app.post("/api/lookup", lookupLimiter, async (req, res) => {
   const { type, value } = req.body;
 
-  if (!type || !value) {
+  if (typeof type !== "string" || typeof value !== "string") {
+    return res.status(400).json({ error: "Invalid parameter types. Strings required." });
+  }
+
+  const cleanType = type.trim().toLowerCase();
+  const allowedTypes = ["tin", "bvn", "nin", "phone", "cac"];
+  if (!allowedTypes.includes(cleanType)) {
+    return res.status(400).json({ error: "Invalid lookup type." });
+  }
+
+  // Cap value to 100 characters to prevent prompt injection or extremely large payloads
+  const cleanValue = value.trim().substring(0, 100);
+
+  if (!cleanType || !cleanValue) {
     return res.status(400).json({ error: "Missing type or value for query" });
   }
 
-  console.log(`[API] Tax ID lookup requested. Type: ${type}, Value: ${value}`);
+  console.log(`[API] Tax ID lookup requested. Type: ${cleanType}, Value: ${cleanValue}`);
 
   if (CANDIDATE_KEYS.length === 0) {
     console.log("[API] No Gemini API keys configured. Using offline mock generator.");
-    const data = generateLocalMockTaxpayer(type, value);
+    const data = generateLocalMockTaxpayer(cleanType, cleanValue);
     return res.json(data);
   }
 
@@ -230,8 +289,8 @@ You are a government-certified tax officer integration system in Nigeria.
 The user wants to look up their National Tax Identification Number (TIN) profile from the Joint Tax Board (JTB) and Federal Inland Revenue Service (FIRS) database.
 
 Generate an extremely realistic, officially formatted JTB TIN Taxpayer Record based on the user's input:
-- Lookup Type: "${type}" (can be: "tin" (direct tax id), "bvn" (Bank Verification Number), "nin" (National Identity Number), "phone" (Phone Number), "cac" (CAC company number or business name))
-- Input Value: "${value}"
+- Lookup Type: "${cleanType}" (can be: "tin" (direct tax id), "bvn" (Bank Verification Number), "nin" (National Identity Number), "phone" (Phone Number), "cac" (CAC company number or business name))
+- Input Value: "${cleanValue}"
 
 Requirements:
 1. "taxpayerName": If the type is 'cac' or if the input looks like a company name, generate a corporate name (e.g., "ALHAJI & SONS LIMITED", "CHEVRON NIGERIA"). If the type is bvn/nin/phone, generate a realistic Nigerian human name in uppercase (e.g. "OLUWASEUN ADIGUN OLUWATOYIN", "CHINEDU CHUKWUMA OKAFOR", "IBRAHIM DANLAMI MUSA"). If direct 'tin', make it a realistic taxpayer name.
@@ -308,7 +367,7 @@ Output strictly in JSON structure matching the schema.
   }
 
   console.error("All Gemini API keys failed for lookup. Fallback to local mock. Error:", lastErrorMsg);
-  const data = generateLocalMockTaxpayer(type, value);
+  const data = generateLocalMockTaxpayer(cleanType, cleanValue);
   return res.json(data);
 });
 
@@ -361,16 +420,29 @@ function generateOfflineSupportReply(lastUserMessage: string): string {
   return `Thank you for asking! I'm here to assist you. Since you asked about "${lastUserMessage}", let me help you with that! I can assist you with tax ID retrievals, wallet funding, pricing plans, downloads, or uncredited payment approvals. If you are asking a general-knowledge or coding question, please make sure your Gemini API key is active in the settings, so I can provide full real-time answers!`;
 }
 
-// AI Customer Support Chat Route
-app.post("/api/support-chat", async (req, res) => {
+// AI Customer Support Chat Route (Protected, Sanitized, and Rate Limited)
+app.post("/api/support-chat", chatLimiter, async (req, res) => {
   const { messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "Messages array is required" });
   }
 
-  const conversationHistory = messages
-    .map((m: any) => `${m.sender === "user" ? "Customer" : m.sender === "admin" ? "Support Agent" : "Support Rep (AI)"}: ${m.text}`)
+  // Security: Slice to latest 10 messages and validate shape to prevent large payload injection
+  const recentMessages = messages.slice(-10).filter((m: any) => {
+    return m && typeof m === "object" && typeof m.text === "string" && typeof m.sender === "string";
+  });
+
+  if (recentMessages.length === 0) {
+    return res.status(400).json({ error: "At least one valid message is required" });
+  }
+
+  // Cap message text to 1000 characters to prevent huge inputs
+  const conversationHistory = recentMessages
+    .map((m: any) => {
+      const cleanText = m.text.substring(0, 1000);
+      return `${m.sender === "user" ? "Customer" : m.sender === "admin" ? "Support Agent" : "Support Rep (AI)"}: ${cleanText}`;
+    })
     .join("\n");
 
   const prompt = `
@@ -429,7 +501,7 @@ Response (Keep it conversational, warm, and professional, under 5 sentences):
 
   // Fallback to smart local responder if all keys fail or list is empty
   console.error("All Gemini API keys failed or were missing. Error:", lastErrorMsg);
-  const lastUserMessage = (messages[messages.length - 1]?.text || "");
+  const lastUserMessage = (recentMessages[recentMessages.length - 1]?.text || "");
   const reply = generateOfflineSupportReply(lastUserMessage);
   return res.json({ text: reply });
 });
@@ -470,13 +542,28 @@ async function getMonnifyAccessToken(): Promise<string> {
   return "mock-access-token-123456";
 }
 
-// Endpoint 1: Initialize Payment (Card / Web Checkout redirect fallback)
-app.post("/api/monnify/init-payment", async (req, res) => {
+// Endpoint 1: Initialize Payment (Card / Web Checkout redirect fallback - Protected and Rate Limited)
+app.post("/api/monnify/init-payment", paymentLimiter, async (req, res) => {
   try {
     const { amount, customerName, customerEmail, paymentDescription, redirectUrl } = req.body;
+    
+    // Strict parameter validation
     if (!amount || !customerName || !customerEmail) {
       return res.status(400).json({ error: "Missing required parameters (amount, customerName, customerEmail)" });
     }
+
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ error: "Amount must be a positive number" });
+    }
+
+    if (typeof customerName !== "string" || typeof customerEmail !== "string") {
+      return res.status(400).json({ error: "Invalid parameter types. Strings required for name/email." });
+    }
+
+    const cleanName = customerName.trim().substring(0, 100);
+    const cleanEmail = customerEmail.trim().substring(0, 150);
+    const cleanDesc = typeof paymentDescription === "string" ? paymentDescription.trim().substring(0, 200) : "Wallet Funding";
 
     const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
     const contractCode = process.env.MONNIFY_CONTRACT_CODE || "1234567890";
@@ -485,11 +572,11 @@ app.post("/api/monnify/init-payment", async (req, res) => {
     const accessToken = await getMonnifyAccessToken();
 
     const body = {
-      amount,
-      customerName,
-      customerEmail,
+      amount: numAmount,
+      customerName: cleanName,
+      customerEmail: cleanEmail,
       paymentReference: reference,
-      paymentDescription: paymentDescription || "Wallet Funding",
+      paymentDescription: cleanDesc,
       currencyCode: "NGN",
       contractCode,
       redirectUrl: redirectUrl || `${req.protocol}://${req.get("host")}/`,
@@ -608,24 +695,32 @@ app.get("/api/monnify/config", (req, res) => {
   }
 });
 
-// Endpoint 3: Reserve Dedicated Virtual Account dynamically
-app.post("/api/monnify/reserve-account", async (req, res) => {
+// Endpoint 3: Reserve Dedicated Virtual Account dynamically (Protected and Rate Limited)
+app.post("/api/monnify/reserve-account", paymentLimiter, async (req, res) => {
   try {
     const { customerName, customerEmail, userId } = req.body;
     if (!customerName || !customerEmail || !userId) {
       return res.status(400).json({ error: "Missing parameters customerName, customerEmail, userId" });
     }
 
+    if (typeof customerName !== "string" || typeof customerEmail !== "string" || typeof userId !== "string") {
+      return res.status(400).json({ error: "Invalid parameter types. Strings required." });
+    }
+
+    const cleanName = customerName.trim().substring(0, 100);
+    const cleanEmail = customerEmail.trim().substring(0, 150);
+    const cleanUserId = userId.trim().substring(0, 80);
+
     const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
     const contractCode = process.env.MONNIFY_CONTRACT_CODE || "1234567890";
     const accessToken = await getMonnifyAccessToken();
-    const reference = `acc-${userId.slice(0, 8)}-${Date.now()}`;
+    const reference = `acc-${cleanUserId.slice(0, 8)}-${Date.now()}`;
 
     const body = {
       accountReference: reference,
-      accountName: `TAXIDPDF-${customerName.toUpperCase()}`,
-      customerEmail,
-      customerName,
+      accountName: `TAXIDPDF-${cleanName.toUpperCase()}`,
+      customerEmail: cleanEmail,
+      customerName: cleanName,
       contractCode,
       currencyCode: "NGN",
       getAllAvailableBanks: true
@@ -669,6 +764,20 @@ app.post("/api/monnify/reserve-account", async (req, res) => {
   }
 });
 
+// Timing-safe comparison helper to completely block cryptographic timing attacks
+function timingSafeCompare(a: string, b: string): boolean {
+  try {
+    const bufA = Buffer.from(a, "utf8");
+    const bufB = Buffer.from(b, "utf8");
+    if (bufA.length !== bufB.length) {
+      return false;
+    }
+    return crypto.timingSafeEqual(bufA, bufB);
+  } catch (e) {
+    return false;
+  }
+}
+
 // Endpoint 4: Webhook callback (Handles automated wallet credit upon transfer/payment success)
 app.post("/api/monnify/webhook", async (req, res) => {
   try {
@@ -689,9 +798,15 @@ app.post("/api/monnify/webhook", async (req, res) => {
     const computedHash512 = crypto.createHmac("sha512", secretKey).update(rawBody).digest("hex");
     const computedHash256 = crypto.createHmac("sha256", secretKey).update(rawBody).digest("hex");
 
-    // Only bypass signature verify if in local/development environment OR signature is verified
-    const isLocal = process.env.NODE_ENV !== "production";
-    const isSignatureValid = (signature === computedHash512) || (signature === computedHash256);
+    // Verify signatures using timing-safe comparison
+    let isSignatureValid = false;
+    if (typeof signature === "string") {
+      isSignatureValid = timingSafeCompare(signature, computedHash512) || timingSafeCompare(signature, computedHash256);
+    }
+
+    // Strict security: Enforce signature verification in production OR whenever a secretKey is configured
+    // This blocks attackers from fake-crediting wallets by spoofing POST payloads.
+    const isLocal = process.env.NODE_ENV !== "production" && !secretKey;
 
     if (isLocal || isSignatureValid) {
       console.log("[Webhook] Authentic Monnify webhook validated successfully.");
