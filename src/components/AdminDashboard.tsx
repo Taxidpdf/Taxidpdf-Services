@@ -1667,7 +1667,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {/* Certificate Display Screen */}
                     <div ref={adminContainerRef} className="flex justify-center w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-inner overflow-hidden">
                       {/* Printable Style Injector */}
-                       <style>{`
+                      <style>{`
                         @media print {
                           html, body {
                             width: 210mm;
@@ -1675,15 +1675,22 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             margin: 0 !important;
                             padding: 0 !important;
                             background: #ffffff !important;
+                            overflow: visible !important;
                           }
                           body * {
                             visibility: hidden;
                           }
+                          .admin-print-relative-parent, .admin-print-scale-parent {
+                            position: static !important;
+                            transform: none !important;
+                            width: auto !important;
+                            height: auto !important;
+                          }
                           #admin-printable-area, #admin-printable-area * {
-                            visibility: visible;
+                            visibility: visible !important;
                           }
                           #admin-printable-area {
-                            position: absolute !important;
+                            position: fixed !important;
                             left: 0 !important;
                             top: 0 !important;
                             width: 210mm !important;
@@ -1695,6 +1702,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             background: #f8faf9 !important;
                             -webkit-print-color-adjust: exact !important;
                             print-color-adjust: exact !important;
+                            z-index: 9999999 !important;
                           }
                           #print-controls, header, aside, .no-print {
                             display: none !important;
@@ -1709,7 +1717,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           width: `${794 * adminScale}px`,
                           position: "relative"
                         }} 
-                        className="shrink-0 transition-all duration-300"
+                        className="shrink-0 transition-all duration-300 admin-print-relative-parent"
                       >
                         {/* Scale wrapper so the printable-area doesn't have the transform scale in the DOM structure */}
                         <div
@@ -1722,6 +1730,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             left: 0,
                             top: 0
                           }}
+                          className="admin-print-scale-parent"
                         >
                           {/* The Actual Printable JTB National TIN Certificate Slip */}
                           <div

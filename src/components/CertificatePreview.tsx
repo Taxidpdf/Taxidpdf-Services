@@ -527,41 +527,49 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
 
   return (
     <div className="space-y-6" id="certificate-preview-container">
-      {/* Printable Style Injector */}
-       <style>{`
-        @media print {
-          html, body {
-            width: 210mm;
-            height: 297mm;
-            margin: 0 !important;
-            padding: 0 !important;
-            background: #ffffff !important;
-          }
-          body * {
-            visibility: hidden;
-          }
-          #printable-area, #printable-area * {
-            visibility: visible;
-          }
-          #printable-area {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 210mm !important;
-            height: 297mm !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            border: none !important;
-            box-shadow: none !important;
-            background: #f8faf9 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          #print-controls, #print-controls-sidebar, #main-header, #main-footer, #faq-section, #taxpayer-news {
-            display: none !important;
-          }
-        }
-      `}</style>
+       {/* Printable Style Injector */}
+        <style>{`
+         @media print {
+           html, body {
+             width: 210mm;
+             height: 297mm;
+             margin: 0 !important;
+             padding: 0 !important;
+             background: #ffffff !important;
+             overflow: visible !important;
+           }
+           body * {
+             visibility: hidden;
+           }
+           .print-relative-parent, .print-scale-parent {
+             position: static !important;
+             transform: none !important;
+             width: auto !important;
+             height: auto !important;
+           }
+           #printable-area, #printable-area * {
+             visibility: visible !important;
+           }
+           #printable-area {
+             position: fixed !important;
+             left: 0 !important;
+             top: 0 !important;
+             width: 210mm !important;
+             height: 297mm !important;
+             margin: 0 !important;
+             padding: 0 !important;
+             border: none !important;
+             box-shadow: none !important;
+             background: #f8faf9 !important;
+             -webkit-print-color-adjust: exact !important;
+             print-color-adjust: exact !important;
+             z-index: 9999999 !important;
+           }
+           #print-controls, #print-controls-sidebar, #main-header, #main-footer, #faq-section, #taxpayer-news {
+             display: none !important;
+           }
+         }
+       `}</style>
 
       {/* Top Banner Message */}
       <div className={`p-6 rounded-3xl shadow-xl shadow-slate-100/50 flex flex-col md:flex-row items-center justify-between gap-4 ${
@@ -716,7 +724,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                 width: `${794 * scale}px`,
                 position: "relative"
               }} 
-              className="shrink-0 transition-all duration-300"
+              className="shrink-0 transition-all duration-300 print-relative-parent"
             >
               {/* Scale wrapper so the printable-area doesn't have the transform scale in the DOM structure */}
               <div
@@ -729,6 +737,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                   left: 0,
                   top: 0
                 }}
+                className="print-scale-parent"
               >
                 {/* The Actual Printable JTB National TIN Certificate Slip */}
                 <div
