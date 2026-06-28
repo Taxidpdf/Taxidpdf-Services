@@ -233,6 +233,30 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             }
           }
 
+          const defaultFeatures = DEFAULT_SETTINGS.features;
+          const mergedFeatures = [...(parsed.features || DEFAULT_SETTINGS.features)];
+          for (const df of defaultFeatures) {
+            if (!mergedFeatures.some(f => f.title.toLowerCase() === df.title.toLowerCase())) {
+              mergedFeatures.push(df);
+            }
+          }
+
+          const defaultNews = DEFAULT_SETTINGS.newsList;
+          const mergedNews = [...(parsed.newsList || DEFAULT_SETTINGS.newsList)];
+          for (const dn of defaultNews) {
+            if (!mergedNews.some(n => n.title.toLowerCase() === dn.title.toLowerCase())) {
+              mergedNews.push(dn);
+            }
+          }
+
+          const defaultBenefits = DEFAULT_SETTINGS.benefits;
+          const mergedBenefits = [...(parsed.benefits || DEFAULT_SETTINGS.benefits)];
+          for (const db of defaultBenefits) {
+            if (!mergedBenefits.some(b => b.toLowerCase() === db.toLowerCase())) {
+              mergedBenefits.push(db);
+            }
+          }
+
           const mergedSettings: PortalSettings = {
             ...DEFAULT_SETTINGS,
             ...parsed,
@@ -241,9 +265,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             footerDisclaimer: parsed.footerDisclaimer || DEFAULT_SETTINGS.footerDisclaimer,
             footerCopyrightText: parsed.footerCopyrightText || DEFAULT_SETTINGS.footerCopyrightText,
             faqs: mergedFaqs,
-            features: parsed.features || DEFAULT_SETTINGS.features,
-            newsList: parsed.newsList || DEFAULT_SETTINGS.newsList,
-            benefits: parsed.benefits || DEFAULT_SETTINGS.benefits,
+            features: mergedFeatures,
+            newsList: mergedNews,
+            benefits: mergedBenefits,
           };
           setPortalSettings(mergedSettings);
         } else {
@@ -400,11 +424,51 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
               needsUpdate = true;
             }
           }
-          dbSettings.faqs = mergedFaqs;
-          setPortalSettings(dbSettings);
-          localStorage.setItem(SETTINGS_KEY, JSON.stringify(dbSettings));
+
+          const defaultFeatures = DEFAULT_SETTINGS.features;
+          const mergedFeatures = [...(dbSettings.features || DEFAULT_SETTINGS.features)];
+          for (const df of defaultFeatures) {
+            if (!mergedFeatures.some(f => f.title.toLowerCase() === df.title.toLowerCase())) {
+              mergedFeatures.push(df);
+              needsUpdate = true;
+            }
+          }
+
+          const defaultNews = DEFAULT_SETTINGS.newsList;
+          const mergedNews = [...(dbSettings.newsList || DEFAULT_SETTINGS.newsList)];
+          for (const dn of defaultNews) {
+            if (!mergedNews.some(n => n.title.toLowerCase() === dn.title.toLowerCase())) {
+              mergedNews.push(dn);
+              needsUpdate = true;
+            }
+          }
+
+          const defaultBenefits = DEFAULT_SETTINGS.benefits;
+          const mergedBenefits = [...(dbSettings.benefits || DEFAULT_SETTINGS.benefits)];
+          for (const db of defaultBenefits) {
+            if (!mergedBenefits.some(b => b.toLowerCase() === db.toLowerCase())) {
+              mergedBenefits.push(db);
+              needsUpdate = true;
+            }
+          }
+
+          const mergedSettings: PortalSettings = {
+            ...DEFAULT_SETTINGS,
+            ...dbSettings,
+            formTitle: dbSettings.formTitle || DEFAULT_SETTINGS.formTitle,
+            formDescription: dbSettings.formDescription || DEFAULT_SETTINGS.formDescription,
+            footerDisclaimer: dbSettings.footerDisclaimer || DEFAULT_SETTINGS.footerDisclaimer,
+            footerCopyrightText: dbSettings.footerCopyrightText || DEFAULT_SETTINGS.footerCopyrightText,
+            faqs: mergedFaqs,
+            features: mergedFeatures,
+            newsList: mergedNews,
+            benefits: mergedBenefits,
+          };
+
+          setPortalSettings(mergedSettings);
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(mergedSettings));
           if (needsUpdate) {
-            await savePortalSettingsToSupabase(dbSettings).catch(e => console.warn("Error updating remote settings with new FAQs:", e));
+            await savePortalSettingsToSupabase(mergedSettings).catch(e => console.warn("Error updating remote settings with new FAQs/Features:", e));
           }
         } else {
           // Seed settings to Supabase
