@@ -36,7 +36,7 @@ export function RotatingWord() {
     "#ca9130", // Rich JTB gold
     "#b12c1b", // Official NRS deep crimson
     "#2563eb", // Vibrant corporate blue
-    "#0f172a"  // Elegant deep slate
+    "#7c3aed"  // Premium vibrant violet/purple (completely different color for effortlessly)
   ];
   const [index, setIndex] = useState(0);
 

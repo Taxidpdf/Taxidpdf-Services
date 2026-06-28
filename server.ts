@@ -4,10 +4,75 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import crypto from "crypto";
+import helmet from "helmet";
 
 dotenv.config();
 
 const app = express();
+
+// Configure Helmet with HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and a compatible CSP
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      // Allow inline scripts for development/framework support
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+      // Allow inline styles and external fonts
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+      // Allow images from safe HTTP/HTTPS endpoints for taxpayer avatars and logo rendering
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      // Allow connections to Supabase, Monnify, Google/Gemini APIs, and local development websockets
+      connectSrc: [
+        "'self'",
+        "https://*.supabase.co",
+        "https://sandbox.monnify.com",
+        "https://api.monnify.com",
+        "https://*.google.com",
+        "https://*",
+        "wss://*",
+        "ws://*"
+      ],
+      // Ensure the preview renders beautifully in AI Studio sandboxes and standard frame environments
+      frameAncestors: [
+        "'self'",
+        "https://*.google.com",
+        "https://*.run.app",
+        "https://*.googleusercontent.com",
+        "https://*.github.dev",
+        "https://*.gitpod.io"
+      ],
+      frameSrc: ["'self'", "https://sandbox.monnify.com", "https://api.monnify.com"],
+      objectSrc: ["'none'"],
+    },
+  },
+  // Strict-Transport-Security (HSTS)
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true
+  },
+  // X-Frame-Options: Set to SAMEORIGIN (will fallback to frameAncestors in modern browsers)
+  frameguard: {
+    action: "sameorigin"
+  },
+  // X-Content-Type-Options: nosniff
+  noSniff: true,
+  // Referrer-Policy
+  referrerPolicy: {
+    policy: "no-referrer"
+  }
+}));
+
+// Permissions-Policy configuration
+app.use((req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  );
+  next();
+});
+
 const PORT = 3000;
 
 app.use(express.json({
@@ -211,9 +276,9 @@ app.post("/api/support-chat", async (req, res) => {
     .join("\n");
 
   const prompt = `
-You are "NRS/JTB Digital Helper AI", an intelligent, highly professional customer support representative for taxidpdf.com, Nigeria's premier digital assistant portal for JTB and NRS (Nigeria Revenue Services) Tax Identification Number (TIN) slips.
+You are "NRS/JTB Digital Helper AI", an intelligent, highly professional customer support representative and versatile digital assistant for taxidpdf.com.
 
-Core context of the website:
+Core context of the website (for when users ask about the portal):
 - This is an independent, third-party helper portal. It is NOT official, does not represent state boards, CAC, JTB, or NRS, and is not an official partner of any government agency.
 - Users can query public details or supply details to generate highly premium, acceptable, official-looking JTB/NRS TIN slips.
 - It operates under official notice that all original ownership belongs to Joint Tax Board and Nigeria Revenue Services.
@@ -226,13 +291,16 @@ Core context of the website:
 - All plans expire exactly every 30 days, upon which the entire remaining wallet credit balance is reset to 0.
 - Manual Topups: If a user is debited but not credited due to network issues, they can click "Report Uncredited Payment" to request manual approval from the support team.
 
-Answer the customer's query professionally, politely, and in a helpful, concise manner. Be friendly and direct.
-NEVER reveal or mention the name "Coach Franklin" or "Franklin". If a user asks who the owner or admin is, politely state that you are the taxidpdf.com Customer Support Team and are here to help them succeed.
+CRITICAL INSTRUCTIONS:
+- You MUST answer EVERY SINGLE QUESTION that a guest or user asks, even if it is completely unrelated to taxidpdf.com, JTB, NRS, or Nigeria!
+- Do NOT decline to answer questions or restrict yourself to tax questions. If a user or guest asks about general knowledge, coding, writing, mathematics, science, sports, jokes, lifestyle, advice, or any general topic, you must provide a highly helpful, accurate, polite, and comprehensive response.
+- Answer the customer's query professionally, politely, and in a helpful manner. Be friendly and direct.
+- NEVER reveal or mention the name "Coach Franklin" or "Franklin". If a user asks who the owner or admin is, politely state that you are the taxidpdf.com Customer Support Team and are here to help them succeed.
 
 Current Conversation:
 ${conversationHistory}
 
-Response (Keep it conversational, warm, and professional, under 4 sentences):
+Response (Keep it conversational, warm, and professional, under 5 sentences):
 `;
 
   if (!ai) {
