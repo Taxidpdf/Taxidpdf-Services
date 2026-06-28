@@ -1,0 +1,58 @@
+name: Live Automated Deployment to TrueHost cPanel
+
+on:
+  push:
+    branches:
+      - main
+      - master # Triggers on push to either main or master branch
+
+jobs:
+  build-and-deploy:
+    name: Build React + Express and Deploy to cPanel
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Install Node.js
+      - name: Setup Node.js
+        uses: actions/node-version@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      # Step 3: Install all dependencies (development + production)
+      - name: Install Dependencies
+        run: npm ci
+
+      # Step 4: Compile SPA assets and bundle server.ts into dist/server.cjs
+      - name: Build Application
+        run: npm run build
+
+      # Step 5: Transfer built production files to TrueHost cPanel via FTP/SFTP
+      # This uploads the compiled dist/ directory, public assets, package.json, and app.js.
+      # It excludes heavy development files, node_modules, and git internals to make the transfer lightning-fast!
+      - name: Deploy via FTP to TrueHost cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          # Path on the server where your app is hosted (e.g., public_html or a specific folder)
+          server-dir: ${{ secrets.FTP_TARGET_DIR || './' }}
+          # Exclude non-production source files to keep the transfer small and secure
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/src/**
+            **/.env*
+            tsconfig.json
+            vite.config.ts
+            eslint.config.js
+            supabase_setup.sql
+            metadata.json
+            assets/**
+            README.md
