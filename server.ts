@@ -10,6 +10,37 @@ dotenv.config();
 
 const app = express();
 
+// Enable trust proxy so Express can read 'X-Forwarded-Proto' correctly behind reverse proxies (cPanel, Nginx, etc.)
+app.set("trust proxy", true);
+
+// HTTP to HTTPS and Domain Canonicalization Middleware
+app.use((req, res, next) => {
+  const host = req.get("host") || "";
+  const lowercaseHost = host.toLowerCase();
+  
+  // Check if we are running on taxidpdf.com or www.taxidpdf.com
+  const isTaxIdPdfDomain = lowercaseHost.includes("taxidpdf.com");
+
+  // Determine protocol from secure property or x-forwarded-proto header
+  const isSecure = req.secure || req.headers["x-forwarded-proto"] === "https";
+
+  if (isTaxIdPdfDomain) {
+    // If request is HTTP OR the hostname is www.taxidpdf.com (non-canonical), redirect permanently to https://taxidpdf.com
+    if (!isSecure || lowercaseHost !== "taxidpdf.com") {
+      console.log(`[Redirect] Redirecting non-secure/non-canonical request on ${host}${req.originalUrl} to https://taxidpdf.com${req.originalUrl}`);
+      return res.redirect(301, `https://taxidpdf.com${req.originalUrl}`);
+    }
+  } else if (!isSecure) {
+    // For other production-like host domains, redirect HTTP to HTTPS, but exclude local/preview domains
+    const isLocalOrPreview = lowercaseHost === "localhost" || lowercaseHost.includes("127.0.0.1") || lowercaseHost.includes("3000") || lowercaseHost.includes(".run.app") || lowercaseHost.includes(".github.dev") || lowercaseHost.includes(".gitpod.io");
+    if (!isLocalOrPreview) {
+      return res.redirect(301, `https://${host}${req.originalUrl}`);
+    }
+  }
+  
+  next();
+});
+
 // Configure Helmet with HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and a compatible CSP
 app.use(helmet({
   contentSecurityPolicy: {

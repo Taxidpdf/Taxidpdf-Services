@@ -6,6 +6,8 @@ import { jsPDF } from "jspdf";
 import { QRCodeSVG } from "qrcode.react";
 import { useUser } from "../context/UserContext";
 
+const oklchCache = new Map<string, string>();
+
 interface CertificatePreviewProps {
   taxpayerData: TaxpayerData;
   onReset: () => void;
@@ -117,8 +119,11 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
   const convertOklchToRgb = (colorStr: string): string => {
     if (!colorStr || typeof colorStr !== 'string') return colorStr;
     if (!colorStr.includes('oklch')) return colorStr;
+    if (oklchCache.has(colorStr)) {
+      return oklchCache.get(colorStr)!;
+    }
     try {
-      return colorStr.replace(/oklch\([^)]+\)/g, (match) => {
+      const result = colorStr.replace(/oklch\([^)]+\)/g, (match) => {
         try {
           const canvas = document.createElement('canvas');
           canvas.width = 1;
@@ -133,6 +138,8 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
           return match;
         }
       });
+      oklchCache.set(colorStr, result);
+      return result;
     } catch (e) {
       return colorStr;
     }
@@ -154,10 +161,13 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
     const originalGetComputedStyle = window.getComputedStyle;
 
     try {
-      // 1. Temporary patch for CSSStyleSheet.prototype.cssRules on the main window
+      // 1. Temporary patch for CSSStyleSheet.prototype.cssRules on the main window with O(1) caching
       Object.defineProperty(CSSStyleSheet.prototype, "cssRules", {
         get() {
           try {
+            if ((this as any).__cachedFilteredRules) {
+              return (this as any).__cachedFilteredRules;
+            }
             const rules = originalCssRulesDescriptor && originalCssRulesDescriptor.get
               ? originalCssRulesDescriptor.get.call(this)
               : [];
@@ -173,7 +183,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
             }
 
             // Return custom array-like Proxy for html2canvas rule iterator
-            return new Proxy(rules, {
+            const proxy = new Proxy(rules, {
               get(target, prop) {
                 if (prop === "length") {
                   return filtered.length;
@@ -188,6 +198,8 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                 return typeof val === "function" ? val.bind(target) : val;
               },
             });
+            (this as any).__cachedFilteredRules = proxy;
+            return proxy;
           } catch (e) {
             return [];
           }
@@ -196,8 +208,12 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
       });
 
       // 2. Temporary patch for window.getComputedStyle on the main window
+      // Optimizes performance by only proxying elements inside the printable area
       window.getComputedStyle = function (el, pseudoElt) {
         const styleObj = originalGetComputedStyle.call(window, el, pseudoElt);
+        if (!certificateRef.current || !certificateRef.current.contains(el)) {
+          return styleObj;
+        }
         return new Proxy(styleObj, {
           get(target, prop) {
             const val = target[prop as any];
@@ -237,6 +253,10 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                 const originalGetComputedStyle = clonedDoc.defaultView.getComputedStyle;
                 clonedDoc.defaultView.getComputedStyle = function(el, pseudoElt) {
                   const styleObj = originalGetComputedStyle.call(clonedDoc.defaultView, el, pseudoElt);
+                  const printableArea = clonedDoc.getElementById("printable-area");
+                  if (!printableArea || !printableArea.contains(el)) {
+                    return styleObj;
+                  }
                   return new Proxy(styleObj, {
                     get(target, prop) {
                       let val = target[prop as any];
@@ -353,6 +373,10 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                 const originalGetComputedStyle = clonedDoc.defaultView.getComputedStyle;
                 clonedDoc.defaultView.getComputedStyle = function(el, pseudoElt) {
                   const styleObj = originalGetComputedStyle.call(clonedDoc.defaultView, el, pseudoElt);
+                  const printableArea = clonedDoc.getElementById("printable-area");
+                  if (!printableArea || !printableArea.contains(el)) {
+                    return styleObj;
+                  }
                   return new Proxy(styleObj, {
                     get(target, prop) {
                       let val = target[prop as any];
