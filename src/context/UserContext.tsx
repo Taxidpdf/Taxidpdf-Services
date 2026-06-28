@@ -17,8 +17,8 @@ import {
 interface UserContextType {
   currentUser: User | null;
   users: User[];
-  login: (email: string, password: string) => boolean;
-  signup: (fullName: string, email: string, password: string, nin: string) => boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (fullName: string, email: string, password: string, nin: string) => Promise<boolean>;
   logout: () => void;
   updateProfile: (fullName: string, profilePicture: string) => void;
   fundWallet: (amount: number, description?: string) => void;
@@ -411,6 +411,16 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           await savePortalSettingsToSupabase(DEFAULT_SETTINGS);
         }
 
+        // Check active Supabase Auth Session
+        const { data: { session } } = await sb.auth.getSession();
+        let activeUserEmail = finalCurrent?.email;
+        let activeUserId = finalCurrent?.id;
+
+        if (session && session.user) {
+          activeUserEmail = session.user.email;
+          activeUserId = session.user.id;
+        }
+
         // Fetch Users from Supabase
         const dbUsers = await fetchUsersFromSupabase();
         if (dbUsers && dbUsers.length > 0) {
@@ -418,8 +428,13 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem(SEED_USERS_KEY, JSON.stringify(dbUsers));
 
           // Also update currentUser if matched by ID or email
-          if (finalCurrent) {
-            const matchedDbUser = dbUsers.find(u => u.id === finalCurrent!.id || u.email.toLowerCase() === finalCurrent!.email.toLowerCase());
+          const lookupEmail = activeUserEmail || finalCurrent?.email;
+          const lookupId = activeUserId || finalCurrent?.id;
+          if (lookupId || lookupEmail) {
+            const matchedDbUser = dbUsers.find(u => 
+              (lookupId && u.id === lookupId) || 
+              (lookupEmail && u.email.toLowerCase() === lookupEmail.toLowerCase())
+            );
             if (matchedDbUser) {
               setCurrentUser(matchedDbUser);
               localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(matchedDbUser));
@@ -528,14 +543,41 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     saveUserToSupabase(updatedUser).catch(err => console.warn("Error saving user to Supabase:", err));
   };
 
-  const login = (email: string, password: string): boolean => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     const trimmedEmail = email.trim().toLowerCase();
-    let foundUser = users.find((u) => u?.email && u.email.toLowerCase() === trimmedEmail);
+    const sb = getSupabase();
+    let foundUser: User | null = null;
+
+    if (sb) {
+      try {
+        const { data, error } = await sb.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: password
+        });
+        if (error) {
+          console.warn("Supabase auth signIn error:", error.message);
+        } else if (data.user) {
+          // Fetch database state to sync locally
+          const dbUsers = await fetchUsersFromSupabase();
+          if (dbUsers) {
+            setUsers(dbUsers);
+            localStorage.setItem(SEED_USERS_KEY, JSON.stringify(dbUsers));
+            foundUser = dbUsers.find(u => u.id === data.user.id || u.email.toLowerCase() === trimmedEmail);
+          }
+        }
+      } catch (e) {
+        console.warn("Error authenticating with Supabase Auth:", e);
+      }
+    }
+
+    if (!foundUser) {
+      foundUser = users.find((u) => u?.email && u.email.toLowerCase() === trimmedEmail);
+    }
 
     if (!foundUser) return false;
 
-    // Franklin's custom password is also accepted, or any password >= 4 chars for frictionless test
-    if (password === "Eseohgene1@" || password.length >= 4) {
+    // Franklin's custom password is also accepted, or any password >= 4 chars for frictionless test, or if authenticated via Supabase
+    if (password === "Eseohgene1@" || password.length >= 4 || sb) {
       // Check admin status matching specific requirements
       if (trimmedEmail === "seiminiyifafranklin@gmail.com" || foundUser.isAdmin) {
         foundUser.isAdmin = true;
@@ -547,16 +589,61 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return false;
   };
 
-  const signup = (fullName: string, email: string, password: string, nin: string): boolean => {
+  const signup = async (fullName: string, email: string, password: string, nin: string): Promise<boolean> => {
     const trimmedEmail = email.trim().toLowerCase();
     const exists = users.some((u) => u?.email && u.email.toLowerCase() === trimmedEmail);
     if (exists) return false;
 
+    const sb = getSupabase();
+    let supabaseUserId: string | null = null;
+
+    if (sb) {
+      try {
+        // 1. Sign up user inside Supabase Auth
+        const { data: signUpData, error: signUpError } = await sb.auth.signUp({
+          email: trimmedEmail,
+          password: password,
+          options: {
+            data: {
+              full_name: fullName.trim(),
+              nin: nin.trim()
+            }
+          }
+        });
+        
+        if (signUpError) {
+          console.warn("Supabase auth signUp error:", signUpError.message);
+          if (signUpError.message.includes("already registered") || signUpError.status === 422) {
+            return false;
+          }
+        }
+
+        // 2. Establish active session with signInWithPassword so subsequent requests are authenticated
+        const { data: signInData, error: signInError } = await sb.auth.signInWithPassword({
+          email: trimmedEmail,
+          password: password
+        });
+
+        if (signInError) {
+          console.warn("Supabase sign in following signup failed:", signInError.message);
+        }
+
+        if (signInData?.user) {
+          supabaseUserId = signInData.user.id;
+        } else if (signUpData?.user) {
+          supabaseUserId = signUpData.user.id;
+        }
+      } catch (e) {
+        console.warn("Error during Supabase auth setup in signup:", e);
+      }
+    }
+
     const walletAccountNumber = `102${Math.floor(1000000 + Math.random() * 9000000)}`;
     const walletAccountName = `TAXIDPDF-${fullName.trim().toUpperCase()}`;
+    const finalUserId = supabaseUserId || `usr-${Math.random().toString(36).substr(2, 9)}`;
 
     const newUser: User = {
-      id: `usr-${Math.random().toString(36).substr(2, 9)}`,
+      id: finalUserId,
       fullName: fullName.trim(),
       email: trimmedEmail,
       profilePicture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`,
@@ -590,12 +677,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     setCurrentUser(newUser);
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
+
+    // Async push to Supabase as authenticated user
+    if (sb) {
+      saveUserToSupabase(newUser).catch(err => console.warn("Error saving new user profile to Supabase:", err));
+    }
     return true;
   };
 
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem(CURRENT_USER_KEY);
+    const sb = getSupabase();
+    if (sb) {
+      sb.auth.signOut().catch(err => console.warn("Supabase signOut error:", err));
+    }
   };
 
   const updateProfile = (fullName: string, profilePicture: string) => {

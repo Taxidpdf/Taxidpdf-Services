@@ -233,7 +233,7 @@ export default function LandingPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
@@ -244,7 +244,7 @@ export default function LandingPage() {
     }
 
     if (isLogin) {
-      const success = login(email, password);
+      const success = await login(email, password);
       if (!success) {
         setError("Invalid credentials. Please verify your email and password, or create a new corporate account.");
       } else {
@@ -272,7 +272,7 @@ export default function LandingPage() {
         setError("Password must be at least 6 characters.");
         return;
       }
-      const success = signup(fullName, email, password, cleanedNIN);
+      const success = await signup(fullName, email, password, cleanedNIN);
       if (!success) {
         setError("This email is already registered on our gateway.");
       } else {
