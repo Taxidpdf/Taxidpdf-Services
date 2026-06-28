@@ -1170,19 +1170,26 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.warn("AI support chat connection issue, using client-side fallback:", err);
         // Direct local client-side fallback to ensure user always gets feedback!
-        const lastUserMessage = (userMsg.text || "").toLowerCase();
-        let fallbackReply = "Hello! I am your NRS/JTB digital support assistant. I can help with any questions regarding your TIN slips, subscriptions, or payments.";
+        const lastUserMessage = (userMsg.text || "");
+        const msg = lastUserMessage.toLowerCase();
+        let fallbackReply = `Thank you for asking! I am operating in smart support mode. Since you asked about "${lastUserMessage}", I want to help! I can assist you with tax ID retrievals, wallet funding, pricing plans, downloads, or uncredited payment approvals. If you are asking a general-knowledge or coding question, please make sure your Gemini API key is active in the settings, so I can provide full real-time answers!`;
         
-        if (lastUserMessage.includes("pay") || lastUserMessage.includes("fund") || lastUserMessage.includes("price") || lastUserMessage.includes("cost") || lastUserMessage.includes("amount") || lastUserMessage.includes("sub") || lastUserMessage.includes("money") || lastUserMessage.includes("fee") || lastUserMessage.includes("charge")) {
-          fallbackReply = "Our pricing plans include the 24-Hour Trial (first slip is ₦100), Starter On-Demand (₦750 per slip), Basic (₦2,500/month), Premium (₦5,000/month), and Unlimited (₦10,000/month). You can upgrade or top up your wallet inside the Billing section.";
-        } else if (lastUserMessage.includes("admin") || lastUserMessage.includes("owner")) {
-          fallbackReply = "For security and advanced administrative approvals, our support team monitors this channel and can assist you directly. Please let us know what you need help with.";
-        } else if (lastUserMessage.includes("cac") || lastUserMessage.includes("official") || lastUserMessage.includes("partner") || lastUserMessage.includes("government")) {
-          fallbackReply = "Please note that taxidpdf.com is an independent third-party helper portal. We are not official partners of CAC, JTB, or NRS, and we utilize public information to generate high-quality slips.";
-        } else if (lastUserMessage.includes("expire") || lastUserMessage.includes("30-day") || lastUserMessage.includes("30 days") || lastUserMessage.includes("reset")) {
-          fallbackReply = "Each subscription plan expires exactly after 30 days, at which time any remaining unused wallet balance is reset to 0. You can easily purchase a new plan inside the Billing section!";
-        } else if (lastUserMessage.includes("uncredited") || lastUserMessage.includes("debit") || lastUserMessage.includes("not credited") || lastUserMessage.includes("topup") || lastUserMessage.includes("transfer") || lastUserMessage.includes("manual")) {
-          fallbackReply = "If you were debited but not credited due to a network delay, please click the 'Report Uncredited Payment' button or provide your payment reference so our support team can credit you manually.";
+        if (msg.includes("hello") || msg.includes("hi") || msg.includes("hey") || msg.includes("greet") || msg.includes("good morning") || msg.includes("good afternoon") || msg.includes("good evening") || msg.includes("how far") || msg.includes("yo")) {
+          fallbackReply = "Hello there! Welcome to taxidpdf.com support. I am your digital assistant, ready to assist you with JTB/NRS TIN slips, wallet funding, pricing plans, or manual payment approvals. How can I help you today?";
+        } else if (msg.includes("who") || msg.includes("owner") || msg.includes("admin") || msg.includes("developer") || msg.includes("creator") || msg.includes("built") || msg.includes("franklin") || msg.includes("coach") || msg.includes("website")) {
+          fallbackReply = "taxidpdf.com is managed and operated by our dedicated Customer Support Team. We are an independent, third-party helper portal designed to automate the retrieval, formatting, and high-quality PDF generation of JTB and NRS TIN slips. How can we help you succeed today?";
+        } else if (msg.includes("how to") || msg.includes("retrieve") || msg.includes("lookup") || msg.includes("generate") || msg.includes("find my") || msg.includes("get my") || msg.includes("slip") || msg.includes("pdf") || msg.includes("download") || msg.includes("register")) {
+          fallbackReply = "To retrieve and download your TIN slip: 1. Log in or register an account. 2. Navigate to 'Search JTB TIN' or 'Search NRS TIN' from your dashboard. 3. Enter your search criteria (BVN, NIN, Phone, CAC Number, or Direct TIN). 4. After your profile is retrieved, make sure your wallet is funded to download the premium slip instantly!";
+        } else if (msg.includes("pay") || msg.includes("fund") || msg.includes("price") || msg.includes("cost") || msg.includes("amount") || msg.includes("sub") || msg.includes("money") || msg.includes("fee") || msg.includes("charge")) {
+          fallbackReply = "Our pricing plans include:\n• **24-Hour Trial**: First slip download is ₦100 (available for 24 hours upon sign-up).\n• **Starter On-Demand**: ₦750 per single download thereafter.\n• **Basic Plan**: ₦2,500/month (includes 5 downloads).\n• **Premium Plan**: ₦5,000/month (includes 50 downloads).\n• **Unlimited Plan**: ₦10,000/month (unlimited downloads).\nYou can fund your wallet instantly inside the Billing section!";
+        } else if (msg.includes("uncredited") || msg.includes("debit") || msg.includes("not credited") || msg.includes("topup") || msg.includes("transfer") || msg.includes("manual") || msg.includes("report")) {
+          fallbackReply = "If you were debited but your wallet was not credited due to a network delay, please click the 'Report Uncredited Payment' button in the Billing section to notify our support admin team for instant manual credit!";
+        } else if (msg.includes("cac") || msg.includes("official") || msg.includes("partner") || msg.includes("government") || msg.includes("firs") || msg.includes("board")) {
+          fallbackReply = "Please note that taxidpdf.com is an independent third-party portal. We are NOT partners with, nor do we represent, the Joint Tax Board (JTB), Federal Inland Revenue Service (FIRS), CAC, or any government agency. We utilize public information to generate highly acceptable premium slips.";
+        } else if (msg.includes("expire") || msg.includes("30-day") || msg.includes("30 days") || msg.includes("reset") || msg.includes("wallet")) {
+          fallbackReply = "Every subscription plan and wallet balance expires exactly after 30 days, at which time any unused credit/downloads are reset to 0. You can easily purchase a new plan inside the Billing section at any time!";
+        } else if (msg.includes("human") || msg.includes("agent") || msg.includes("rep") || msg.includes("contact") || msg.includes("whatsapp") || msg.includes("phone number") || msg.includes("email") || msg.includes("live")) {
+          fallbackReply = "Our human support agents are notified of all chats! Feel free to leave your message here, and an agent will join the chat room to assist you shortly.";
         }
 
         const aiMsg: ChatMessage = {
