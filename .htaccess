@@ -15,4 +15,10 @@
     # This ensures consistent cookies, security headers, and SEO ranking
     RewriteCond %{HTTP_HOST} ^www\.taxidpdf\.com$ [NC]
     RewriteRule ^(.*)$ https://taxidpdf.com/$1 [L,R=301]
+
+    # 3. React SPA Fallback Routing
+    # This ensures that deep links like /dashboard or /login are handled by React index.html
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . /index.html [L]
 </IfModule>
