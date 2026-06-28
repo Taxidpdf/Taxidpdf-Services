@@ -97,7 +97,7 @@ export default function Header({ onEnterAdmin, onLogoClick }: HeaderProps) {
               
               <div className="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-2xl py-1.5 pl-3 pr-2.5 shadow-sm text-xs">
                 <div className="flex items-center gap-2">
-                  {currentUser.profilePicture && (currentUser.profilePicture.startsWith("http") || currentUser.profilePicture.startsWith("data:image")) ? (
+                  {currentUser.profilePicture && (currentUser.profilePicture.startsWith("http") || currentUser.profilePicture.startsWith("data:")) ? (
                     <img 
                       src={currentUser.profilePicture} 
                       alt={currentUser.fullName} 

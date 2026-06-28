@@ -1665,32 +1665,43 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     </div>
 
                     {/* Certificate Display Screen */}
-                    <div ref={adminContainerRef} className="flex justify-center w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-inner overflow-hidden">
+                    <div id="admin-certificate-stage" ref={adminContainerRef} className="flex justify-center w-full bg-slate-900 border border-slate-800 rounded-2xl p-4 md:p-6 shadow-inner overflow-hidden">
                       {/* Printable Style Injector */}
                       <style>{`
                         @media print {
                           html, body {
-                            width: 210mm;
-                            height: 297mm;
+                            width: 210mm !important;
+                            height: 297mm !important;
                             margin: 0 !important;
                             padding: 0 !important;
                             background: #ffffff !important;
-                            overflow: visible !important;
+                            overflow: hidden !important;
                           }
                           body * {
-                            visibility: hidden;
+                            visibility: hidden !important;
                           }
-                          .admin-print-relative-parent, .admin-print-scale-parent {
-                            position: static !important;
+                          #main-app-container, main, #admin-certificate-stage, .admin-print-relative-parent, .admin-print-scale-parent {
+                            position: absolute !important;
+                            left: 0 !important;
+                            top: 0 !important;
+                            width: 210mm !important;
+                            height: 297mm !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                            border: none !important;
+                            background: transparent !important;
+                            box-shadow: none !important;
                             transform: none !important;
-                            width: auto !important;
-                            height: auto !important;
+                            min-height: 0 !important;
+                            max-height: 297mm !important;
+                            overflow: hidden !important;
+                            visibility: hidden !important;
                           }
                           #admin-printable-area, #admin-printable-area * {
                             visibility: visible !important;
                           }
                           #admin-printable-area {
-                            position: fixed !important;
+                            position: absolute !important;
                             left: 0 !important;
                             top: 0 !important;
                             width: 210mm !important;

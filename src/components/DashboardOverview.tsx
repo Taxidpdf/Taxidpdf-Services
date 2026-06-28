@@ -44,7 +44,7 @@ export default function DashboardOverview({ onSelectTab, onSelectSlip }: Dashboa
         <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-48 h-48 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex items-center gap-4 w-full md:w-auto">
-          {currentUser.profilePicture && (currentUser.profilePicture.startsWith("http") || currentUser.profilePicture.startsWith("data:image")) ? (
+          {currentUser.profilePicture && (currentUser.profilePicture.startsWith("http") || currentUser.profilePicture.startsWith("data:")) ? (
             <img 
               src={currentUser.profilePicture} 
               alt={currentUser.fullName} 

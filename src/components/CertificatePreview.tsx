@@ -531,27 +531,38 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
         <style>{`
          @media print {
            html, body {
-             width: 210mm;
-             height: 297mm;
+             width: 210mm !important;
+             height: 297mm !important;
              margin: 0 !important;
              padding: 0 !important;
              background: #ffffff !important;
-             overflow: visible !important;
+             overflow: hidden !important;
            }
            body * {
-             visibility: hidden;
+             visibility: hidden !important;
            }
-           .print-relative-parent, .print-scale-parent {
-             position: static !important;
+           #main-app-container, main, #certificate-preview-container, #certificate-stage, .print-relative-parent, .print-scale-parent {
+             position: absolute !important;
+             left: 0 !important;
+             top: 0 !important;
+             width: 210mm !important;
+             height: 297mm !important;
+             padding: 0 !important;
+             margin: 0 !important;
+             border: none !important;
+             background: transparent !important;
+             box-shadow: none !important;
              transform: none !important;
-             width: auto !important;
-             height: auto !important;
+             min-height: 0 !important;
+             max-height: 297mm !important;
+             overflow: hidden !important;
+             visibility: hidden !important;
            }
            #printable-area, #printable-area * {
              visibility: visible !important;
            }
            #printable-area {
-             position: fixed !important;
+             position: absolute !important;
              left: 0 !important;
              top: 0 !important;
              width: 210mm !important;
@@ -715,7 +726,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
 
         {/* Certificate Display Screen */}
         <div className="lg:col-span-3 flex justify-center w-full">
-          <div ref={containerRef} className="w-full max-w-[794px] bg-slate-100 rounded-3xl p-4 md:p-8 flex justify-center items-center border border-slate-200/50 shadow-xl shadow-slate-100/50 overflow-hidden">
+          <div id="certificate-stage" ref={containerRef} className="w-full max-w-[794px] bg-slate-100 rounded-3xl p-4 md:p-8 flex justify-center items-center border border-slate-200/50 shadow-xl shadow-slate-100/50 overflow-hidden">
             
             {/* Aspect-ratio-fitting scale wrapper for high fidelity preview without horizontal scrolling */}
             <div 

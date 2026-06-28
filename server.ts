@@ -829,10 +829,17 @@ app.post("/api/monnify/webhook", async (req, res) => {
         console.log(`[Webhook] Success Payment Received: Ref: ${reference}, Amount: ₦${amount}, User: ${customerEmail}`);
 
         // Update Supabase if Supabase credentials exist
-        const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+        let supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
         const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
         if (supabaseUrl && supabaseKey) {
+          // Sanitize URL: Strip trailing slashes and any accidental /rest/v1
+          supabaseUrl = supabaseUrl.trim().replace(/\/+$/, "");
+          if (supabaseUrl.toLowerCase().endsWith("/rest/v1")) {
+            supabaseUrl = supabaseUrl.slice(0, -8);
+          }
+          supabaseUrl = supabaseUrl.replace(/\/+$/, "");
+
           const { createClient } = await import("@supabase/supabase-js");
           const supabase = createClient(supabaseUrl, supabaseKey);
 

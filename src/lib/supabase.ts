@@ -11,7 +11,7 @@ export function getSupabase(): SupabaseClient | null {
     return supabaseInstance;
   }
 
-  const supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
+  let supabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL;
   const supabaseAnonKey = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -21,6 +21,13 @@ export function getSupabase(): SupabaseClient | null {
     );
     return null;
   }
+
+  // Sanitize URL: Strip trailing slashes and any accidental /rest/v1
+  supabaseUrl = supabaseUrl.trim().replace(/\/+$/, "");
+  if (supabaseUrl.toLowerCase().endsWith("/rest/v1")) {
+    supabaseUrl = supabaseUrl.slice(0, -8);
+  }
+  supabaseUrl = supabaseUrl.replace(/\/+$/, "");
 
   try {
     supabaseInstance = createClient(supabaseUrl, supabaseAnonKey);
