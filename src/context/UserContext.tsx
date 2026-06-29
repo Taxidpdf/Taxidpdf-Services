@@ -118,6 +118,10 @@ const DEFAULT_SETTINGS: PortalSettings = {
   ],
   features: [
     {
+      title: "CAC Integration",
+      desc: "Supply corporate RC Number to instantly pull up registered items."
+    },
+    {
       title: "Beautiful PDF Compositions",
       desc: "We layout and watermark JTB TIN slips in beautiful, high-contrast, scalable vector typography that is 100% compliant and ready to present to banks or government portals."
     },
