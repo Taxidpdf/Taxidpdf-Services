@@ -233,7 +233,10 @@ INSERT INTO public.portal_settings (
       {"q": "How can I verify a TIN?", "a": "You can verify the status of a TIN using the public NRS portal search fields."}
     ]'::jsonb,
     '[
-      {"title": "CAC Integration", "desc": "Supply corporate RC Number to instantly pull up registered items."}
+      {"title": "CAC Integration", "desc": "Supply corporate RC Number to instantly pull up registered items."},
+      {"title": "Beautiful PDF Compositions", "desc": "We layout and watermark JTB TIN slips in beautiful, high-contrast, scalable vector typography that is 100% compliant and ready to present to banks or government portals."},
+      {"title": "Wallet On-Demand Settlement", "desc": "After your 24-hour trial, never get locked into expensive monthly sub fees. Pay only ₦750 per download using bank transfers to your assigned Moniepoint gateway account."},
+      {"title": "Eternal Storage & Re-downloads", "desc": "Every generated slip is logged safely to your dashboard. You can re-download, view, or copy saved tax details for free at any time with zero extra costs."}
     ]'::jsonb,
     '[]'::jsonb,
     '["Instant Watermarked PDFs", "Wallet Instant Transfers", "Unlimited History Logs", "Full NRS/JTB Compliance"]'::jsonb
@@ -255,43 +258,55 @@ ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.portal_settings ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
+DROP POLICY IF EXISTS "Allow public read on profiles (for agents lookup)" ON public.profiles;
 CREATE POLICY "Allow public read on profiles (for agents lookup)" ON public.profiles
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow users to insert own profile" ON public.profiles;
 CREATE POLICY "Allow users to insert own profile" ON public.profiles
     FOR INSERT WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Allow users to update own profile" ON public.profiles;
 CREATE POLICY "Allow users to update own profile" ON public.profiles
     FOR UPDATE USING (auth.uid() = id);
 
 -- Transactions Policies
+DROP POLICY IF EXISTS "Allow users to read own transactions" ON public.transactions;
 CREATE POLICY "Allow users to read own transactions" ON public.transactions
     FOR SELECT USING (auth.uid() = user_id OR (SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Allow users to insert own transactions" ON public.transactions;
 CREATE POLICY "Allow users to insert own transactions" ON public.transactions
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Saved Slips Policies
+DROP POLICY IF EXISTS "Allow users to read own saved slips" ON public.saved_slips;
 CREATE POLICY "Allow users to read own saved slips" ON public.saved_slips
     FOR SELECT USING (auth.uid() = user_id OR (SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Allow users to insert own slips" ON public.saved_slips;
 CREATE POLICY "Allow users to insert own slips" ON public.saved_slips
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 -- Pending Topups Policies
+DROP POLICY IF EXISTS "Allow users to read own topups" ON public.pending_topups;
 CREATE POLICY "Allow users to read own topups" ON public.pending_topups
     FOR SELECT USING (auth.uid() = user_id OR (SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Allow users to create topups" ON public.pending_topups;
 CREATE POLICY "Allow users to create topups" ON public.pending_topups
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admin update policy" ON public.pending_topups;
 CREATE POLICY "Admin update policy" ON public.pending_topups
     FOR UPDATE USING ((SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
 -- Support Chats Policies
+DROP POLICY IF EXISTS "Allow users to read/update own chats" ON public.support_chats;
 CREATE POLICY "Allow users to read/update own chats" ON public.support_chats
     FOR ALL USING (auth.uid() = user_id OR (SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
+DROP POLICY IF EXISTS "Allow message exchange" ON public.chat_messages;
 CREATE POLICY "Allow message exchange" ON public.chat_messages
     FOR ALL USING (
         EXISTS (
@@ -301,8 +316,10 @@ CREATE POLICY "Allow message exchange" ON public.chat_messages
     );
 
 -- Portal Settings Policies
+DROP POLICY IF EXISTS "Allow public read of system settings" ON public.portal_settings;
 CREATE POLICY "Allow public read of system settings" ON public.portal_settings
     FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Allow only admins to edit system settings" ON public.portal_settings;
 CREATE POLICY "Allow only admins to edit system settings" ON public.portal_settings
     FOR UPDATE USING ((SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
