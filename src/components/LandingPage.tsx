@@ -819,17 +819,27 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="flex flex-wrap justify-center gap-8">
             {(portalSettings.features || []).map((feature, fIdx) => {
-              const getIcon = (idx: number) => {
-                if (idx === 0) return <FileText className="w-6 h-6" />;
-                if (idx === 1) return <Coins className="w-6 h-6" />;
+              const getIcon = (title: string, idx: number) => {
+                const lower = title.toLowerCase();
+                if (lower.includes("cac") || lower.includes("corporate") || lower.includes("company")) return <Building className="w-6 h-6" />;
+                if (lower.includes("pdf") || lower.includes("composition") || lower.includes("layout") || lower.includes("slip")) return <FileText className="w-6 h-6" />;
+                if (lower.includes("wallet") || lower.includes("settlement") || lower.includes("pay") || lower.includes("fee")) return <Coins className="w-6 h-6" />;
+                if (lower.includes("storage") || lower.includes("download") || lower.includes("history")) return <Clock className="w-6 h-6" />;
+                
+                if (idx === 0) return <Building className="w-6 h-6" />;
+                if (idx === 1) return <FileText className="w-6 h-6" />;
+                if (idx === 2) return <Coins className="w-6 h-6" />;
                 return <Clock className="w-6 h-6" />;
               };
               return (
-                <div key={fIdx} className="bg-slate-50 rounded-3xl p-6 border border-slate-100 hover:shadow-lg transition flex flex-col items-center text-center">
+                <div 
+                  key={fIdx} 
+                  className="bg-slate-50 rounded-3xl p-6 border border-slate-100 hover:shadow-lg transition flex flex-col items-center text-center w-full md:w-[calc(33.333%-2rem)] min-w-[280px] max-w-[360px]"
+                >
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mb-5">
-                    {getIcon(fIdx)}
+                    {getIcon(feature.title, fIdx)}
                   </div>
                   <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide mb-2">{feature.title}</h3>
                   <p className="text-slate-500 text-xs leading-relaxed">
