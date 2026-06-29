@@ -416,17 +416,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       let canvas;
       try {
         canvas = await html2canvas(element, {
-          scale: 2,
+          scale: 1.5,
           useCORS: true,
-          logging: true,
+          logging: false,
           backgroundColor: "#ffffff",
           onclone: (clonedDoc) => {
             try {
+              const iframeWin = clonedDoc.defaultView;
               // 1. Setup oklch parser and computedStyle proxy in the iframe window
-              if (clonedDoc.defaultView) {
-                const originalGetComputedStyle = clonedDoc.defaultView.getComputedStyle;
-                clonedDoc.defaultView.getComputedStyle = function(el, pseudoElt) {
-                  const styleObj = originalGetComputedStyle.call(clonedDoc.defaultView, el, pseudoElt);
+              if (iframeWin) {
+                const originalGetComputedStyle = iframeWin.getComputedStyle;
+                iframeWin.getComputedStyle = function(el, pseudoElt) {
+                  const styleObj = originalGetComputedStyle.call(iframeWin, el, pseudoElt);
                   return new Proxy(styleObj, {
                     get(target, prop) {
                       let val = target[prop as any];
@@ -449,33 +450,66 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     }
                   });
                 };
+
+                // 2. Patch CSSStyleSheet.prototype.cssRules inside the iframe to instantly skip oklch rules on the fly!
+                try {
+                  const iframeProto = iframeWin.CSSStyleSheet.prototype;
+                  const originalIframeCssRules = Object.getOwnPropertyDescriptor(iframeProto, "cssRules");
+                  Object.defineProperty(iframeProto, "cssRules", {
+                    get() {
+                      try {
+                        if ((this as any).__cachedFilteredRules) {
+                          return (this as any).__cachedFilteredRules;
+                        }
+                        const rules = originalIframeCssRules && originalIframeCssRules.get
+                          ? originalIframeCssRules.get.call(this)
+                          : [];
+                        if (!rules) return rules;
+
+                        const filtered: CSSRule[] = [];
+                        for (let i = 0; i < rules.length; i++) {
+                          const rule = rules[i];
+                          if (rule && rule.cssText && rule.cssText.includes("oklch")) {
+                            continue; // Skip rules with oklch to prevent html2canvas parsing crash
+                          }
+                          filtered.push(rule);
+                        }
+
+                        const proxy = new Proxy(rules, {
+                          get(target, prop) {
+                            if (prop === "length") {
+                              return filtered.length;
+                            }
+                            if (typeof prop === "string" && !isNaN(Number(prop))) {
+                              return filtered[Number(prop)];
+                            }
+                            if (prop === "item") {
+                              return (index: number) => filtered[index];
+                            }
+                            const val = (target as any)[prop];
+                            return typeof val === "function" ? val.bind(target) : val;
+                          },
+                        });
+                        (this as any).__cachedFilteredRules = proxy;
+                        return proxy;
+                      } catch (e) {
+                        return [];
+                      }
+                    },
+                    configurable: true,
+                  });
+                } catch (err) {
+                  console.warn("Iframe cssRules prototype patch failed:", err);
+                }
               }
 
-              // 2. Process style tags to strip oklch declarations
+              // 3. Process style tags to strip oklch declarations
               const styleTags = clonedDoc.querySelectorAll("style");
               styleTags.forEach((style) => {
                 if (style.innerHTML && style.innerHTML.includes("oklch")) {
                   style.innerHTML = style.innerHTML.replace(/oklch\([^)]+\)/g, "#334155");
                 }
               });
-
-              // 3. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
-              for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
-                try {
-                  const sheet = clonedDoc.styleSheets[i];
-                  if (!sheet) continue;
-                  const rules = sheet.cssRules || sheet.rules;
-                  if (!rules) continue;
-                  for (let j = rules.length - 1; j >= 0; j--) {
-                    const rule = rules[j];
-                    if (rule && rule.cssText && rule.cssText.includes("oklch")) {
-                      sheet.deleteRule(j);
-                    }
-                  }
-                } catch (e) {
-                  // Ignore stylesheet reading errors
-                }
-              }
 
               const el = clonedDoc.getElementById("admin-printable-area");
               if (el) {
@@ -532,17 +566,18 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       } catch (corsErr) {
         console.warn("CORS-enabled Admin HTML2Canvas failed, retrying without CORS...", corsErr);
         canvas = await html2canvas(element, {
-          scale: 2,
+          scale: 1.5,
           useCORS: false,
-          logging: true,
+          logging: false,
           backgroundColor: "#ffffff",
           onclone: (clonedDoc) => {
             try {
+              const iframeWin = clonedDoc.defaultView;
               // 1. Setup oklch parser and computedStyle proxy in the iframe window
-              if (clonedDoc.defaultView) {
-                const originalGetComputedStyle = clonedDoc.defaultView.getComputedStyle;
-                clonedDoc.defaultView.getComputedStyle = function(el, pseudoElt) {
-                  const styleObj = originalGetComputedStyle.call(clonedDoc.defaultView, el, pseudoElt);
+              if (iframeWin) {
+                const originalGetComputedStyle = iframeWin.getComputedStyle;
+                iframeWin.getComputedStyle = function(el, pseudoElt) {
+                  const styleObj = originalGetComputedStyle.call(iframeWin, el, pseudoElt);
                   return new Proxy(styleObj, {
                     get(target, prop) {
                       let val = target[prop as any];
@@ -565,33 +600,66 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     }
                   });
                 };
+
+                // 2. Patch CSSStyleSheet.prototype.cssRules inside the iframe to instantly skip oklch rules on the fly!
+                try {
+                  const iframeProto = iframeWin.CSSStyleSheet.prototype;
+                  const originalIframeCssRules = Object.getOwnPropertyDescriptor(iframeProto, "cssRules");
+                  Object.defineProperty(iframeProto, "cssRules", {
+                    get() {
+                      try {
+                        if ((this as any).__cachedFilteredRules) {
+                          return (this as any).__cachedFilteredRules;
+                        }
+                        const rules = originalIframeCssRules && originalIframeCssRules.get
+                          ? originalIframeCssRules.get.call(this)
+                          : [];
+                        if (!rules) return rules;
+
+                        const filtered: CSSRule[] = [];
+                        for (let i = 0; i < rules.length; i++) {
+                          const rule = rules[i];
+                          if (rule && rule.cssText && rule.cssText.includes("oklch")) {
+                            continue; // Skip rules with oklch to prevent html2canvas parsing crash
+                          }
+                          filtered.push(rule);
+                        }
+
+                        const proxy = new Proxy(rules, {
+                          get(target, prop) {
+                            if (prop === "length") {
+                              return filtered.length;
+                            }
+                            if (typeof prop === "string" && !isNaN(Number(prop))) {
+                              return filtered[Number(prop)];
+                            }
+                            if (prop === "item") {
+                              return (index: number) => filtered[index];
+                            }
+                            const val = (target as any)[prop];
+                            return typeof val === "function" ? val.bind(target) : val;
+                          },
+                        });
+                        (this as any).__cachedFilteredRules = proxy;
+                        return proxy;
+                      } catch (e) {
+                        return [];
+                      }
+                    },
+                    configurable: true,
+                  });
+                } catch (err) {
+                  console.warn("Iframe cssRules prototype patch failed:", err);
+                }
               }
 
-              // 2. Process style tags to strip oklch declarations
+              // 3. Process style tags to strip oklch declarations
               const styleTags = clonedDoc.querySelectorAll("style");
               styleTags.forEach((style) => {
                 if (style.innerHTML && style.innerHTML.includes("oklch")) {
                   style.innerHTML = style.innerHTML.replace(/oklch\([^)]+\)/g, "#334155");
                 }
               });
-
-              // 3. Remove oklch rules from parsed stylesheets to prevent html2canvas color parsing crash
-              for (let i = 0; i < clonedDoc.styleSheets.length; i++) {
-                try {
-                  const sheet = clonedDoc.styleSheets[i];
-                  if (!sheet) continue;
-                  const rules = sheet.cssRules || sheet.rules;
-                  if (!rules) continue;
-                  for (let j = rules.length - 1; j >= 0; j--) {
-                    const rule = rules[j];
-                    if (rule && rule.cssText && rule.cssText.includes("oklch")) {
-                      sheet.deleteRule(j);
-                    }
-                  }
-                } catch (e) {
-                  // Ignore stylesheet reading errors
-                }
-              }
 
               const el = clonedDoc.getElementById("admin-printable-area");
               if (el) {
