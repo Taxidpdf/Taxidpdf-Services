@@ -307,7 +307,7 @@ export default function WalletAndSubs() {
           <div className="flex justify-between items-start relative z-10">
             <div>
               <span className="text-[9px] uppercase font-black tracking-widest text-emerald-300 block leading-none">
-                JTB & NRS PORTAL WALLET
+                TAXIDPDF PORTAL WALLET
               </span>
               <span className="text-[11px] font-bold text-white/80 mt-1 block">
                 Paystack Secure Gateway
@@ -345,7 +345,7 @@ export default function WalletAndSubs() {
             <div className="truncate max-w-[70%]">
               <span className="text-[8px] uppercase font-bold text-emerald-300 block opacity-50">Cardholder Name</span>
               <span className="font-extrabold text-white font-mono tracking-wide text-[10px] truncate block uppercase">
-                {currentUser.walletAccountName || `TAXIDPDF-${currentUser.fullName.toUpperCase()}`}
+                {currentUser.fullName.toUpperCase()}
               </span>
             </div>
             <div className="text-right shrink-0">

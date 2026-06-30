@@ -1013,7 +1013,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                   <div className="flex justify-between items-center text-xs">
                     <span className="font-semibold text-slate-500">Account Name</span>
                     <span className="font-bold text-slate-800 uppercase text-[10px]">
-                      {currentUser?.walletAccountName || `TAXIDPDF-${currentUser?.fullName?.toUpperCase() || "TAXPAYER"}`}
+                      {currentUser?.fullName?.toUpperCase() || "TAXPAYER"}
                     </span>
                   </div>
                 </div>
