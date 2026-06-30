@@ -3,8 +3,6 @@ import { motion } from "motion/react";
 import Header from "./components/Header";
 import SearchForm from "./components/SearchForm";
 import CertificatePreview from "./components/CertificatePreview";
-import FAQ from "./components/FAQ";
-import TaxpayerNews from "./components/TaxpayerNews";
 import LandingPage, { RotatingWord } from "./components/LandingPage";
 import DashboardOverview from "./components/DashboardOverview";
 import WalletAndSubs from "./components/WalletAndSubs";
@@ -476,19 +474,6 @@ export default function App() {
             )}
 
           </div>
-
-        {/* Informative Grid (News Tips) - visible when not active on a result or keeps layout complete */}
-        <div className="space-y-4 pt-4 border-t border-slate-100/40">
-          <div className="border-b border-slate-200/60 pb-2">
-            <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-widest font-sans">
-              National Tax Intelligence & Guides
-            </h3>
-          </div>
-          <TaxpayerNews />
-        </div>
-
-        {/* Accordion FAQ Area */}
-        <FAQ />
 
       </main>
 

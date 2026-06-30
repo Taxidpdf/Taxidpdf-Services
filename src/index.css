@@ -120,3 +120,82 @@ html.dark footer {
   background-color: #060a12 !important;
   border-color: #141f36 !important;
 }
+
+/* --- Clean Light Mode Overrides for Administrator Panel --- */
+html:not(.dark) .min-h-screen.bg-slate-950 {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) header.bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+html:not(.dark) header.bg-slate-900 h1 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) header.bg-slate-900 span {
+  color: #475569 !important;
+}
+
+html:not(.dark) .bg-slate-900 {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .border-slate-800 {
+  border-color: #cbd5e1 !important;
+}
+
+html:not(.dark) .text-white {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .text-slate-400 {
+  color: #475569 !important;
+}
+
+html:not(.dark) .text-slate-500 {
+  color: #64748b !important;
+}
+
+html:not(.dark) .text-slate-300 {
+  color: #1e293b !important;
+}
+
+html:not(.dark) .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html:not(.dark) .bg-slate-950\/65 {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) .bg-slate-950 {
+  background-color: #f8fafc !important;
+}
+
+html:not(.dark) .bg-slate-800 {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html:not(.dark) .hover\:bg-slate-700:hover {
+  background-color: #cbd5e1 !important;
+}
+
+html:not(.dark) .hover\:bg-slate-900:hover {
+  background-color: #f1f5f9 !important;
+}
+
+html:not(.dark) input,
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+

@@ -23,7 +23,9 @@ import {
   LogOut,
   Download,
   Printer,
-  Copy
+  Copy,
+  Sun,
+  Moon
 } from "lucide-react";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
@@ -52,6 +54,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [authError, setAuthError] = useState("");
 
   const [activeTab, setActiveTab] = useState<"metrics" | "topups" | "users" | "cms" | "support" | "slip-gen">("metrics");
+  
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
   
   // Manual admin top-up form state
   const [manualEmail, setManualEmail] = useState("");
@@ -725,6 +744,15 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 transition cursor-pointer text-slate-300 flex items-center justify-center shrink-0"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-300" />}
+            </button>
+
             <button
               onClick={onExit}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
