@@ -21,7 +21,7 @@ import {
 export default function WalletAndSubs() {
   const { currentUser, fundWallet, purchaseSubscription, portalSettings, requestManualTopup } = useUser();
   const [fundingPurpose, setFundingPurpose] = useState<string>("custom");
-  const [fundingAmount, setFundingAmount] = useState<string>("5000");
+  const [fundingAmount, setFundingAmount] = useState<string>("750");
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -63,7 +63,7 @@ export default function WalletAndSubs() {
       const needed = Math.max(0, portalSettings.unlimitedFee - balance);
       setFundingAmount(needed.toString());
     } else {
-      setFundingAmount("5000");
+      setFundingAmount("750");
     }
   }, [fundingPurpose, currentUser, portalSettings]);
 
@@ -178,6 +178,11 @@ export default function WalletAndSubs() {
         setErrorMsg(`Purchase constraint error: For On-Demand retrieval, you must fund exactly ₦${portalSettings.onDemandFee.toLocaleString()}.`);
         return;
       }
+    } else if (fundingPurpose === "custom") {
+      if (numAmount !== 750) {
+        setErrorMsg("Purchase constraint error: Custom top-up is locked to exactly ₦750.");
+        return;
+      }
     }
 
     setIsCheckoutOpen(true);
@@ -222,7 +227,7 @@ export default function WalletAndSubs() {
           setIsCheckoutOpen(false);
           setSuccessMsg(`Sandbox Paystack Payment of ₦${amount.toLocaleString()} successful! Credited your wallet balance.`);
           setFundingPurpose("custom");
-          setFundingAmount("5000");
+          setFundingAmount("750");
         }, 1800);
       }
     } catch (err: any) {
@@ -375,7 +380,7 @@ export default function WalletAndSubs() {
                 }`}
               >
                 <span>Custom Top-up</span>
-                <span className="text-[10px] text-slate-400 font-medium mt-1">Load arbitrary credits</span>
+                <span className="text-[10px] text-slate-400 font-medium mt-1">Single retrieve credit (₦750 locked)</span>
               </button>
 
               <button
@@ -441,15 +446,13 @@ export default function WalletAndSubs() {
               </span>
               <input
                 type="number"
-                disabled={fundingPurpose !== "custom"}
-                min="500"
-                step="100"
-                placeholder="e.g. 5,000"
+                disabled={true}
+                min="750"
+                max="750"
+                placeholder="750"
                 value={fundingAmount}
-                onChange={(e) => setFundingAmount(e.target.value)}
-                className={`w-full pl-8 pr-4 py-3.5 border focus:bg-white rounded-xl text-sm font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all ${
-                  fundingPurpose !== "custom" ? "bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed" : "bg-slate-50 border-slate-200 text-slate-800"
-                }`}
+                onChange={(e) => setFundingAmount("750")}
+                className="w-full pl-8 pr-4 py-3.5 border bg-slate-100 border-slate-300 text-slate-500 cursor-not-allowed rounded-xl text-sm font-bold focus:outline-none transition-all"
               />
             </div>
             <button
@@ -460,7 +463,12 @@ export default function WalletAndSubs() {
             </button>
           </form>
 
-          {fundingPurpose !== "custom" && (
+          {fundingPurpose === "custom" ? (
+            <div className="bg-amber-50 text-amber-900 border border-amber-200 rounded-xl p-3 text-[11px] font-semibold flex items-center gap-2 leading-tight">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Custom top-ups are locked to exactly ₦750 (the single on-demand rate). To obtain bulk discount rates or unlimited query access, please upgrade to a subscription plan below.</span>
+            </div>
+          ) : (
             <div className="bg-amber-50 text-amber-900 border border-amber-200 rounded-xl p-3 text-[11px] font-semibold flex items-center gap-2 leading-tight">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
               <span>Purchase limit bounds are active. You cannot fund above or below the exact required prorated plan amount of ₦{parseFloat(fundingAmount).toLocaleString()}.</span>
@@ -470,21 +478,10 @@ export default function WalletAndSubs() {
           {/* Presets (Only shown for custom general funding) */}
           {fundingPurpose === "custom" && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="text-slate-400 font-semibold mr-1">Presets:</span>
-              {["1000", "2500", "5000", "10000"].map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  onClick={() => setFundingAmount(preset)}
-                  className={`px-3 py-1.5 rounded-lg border font-bold transition select-none cursor-pointer ${
-                    fundingAmount === preset 
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-700" 
-                      : "border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  ₦{parseFloat(preset).toLocaleString()}
-                </button>
-              ))}
+              <span className="text-slate-400 font-semibold mr-1">Active Limit:</span>
+              <span className="px-3 py-1.5 rounded-lg border font-bold border-amber-200 bg-amber-50 text-amber-700 select-none">
+                ₦750 Only (Locked)
+              </span>
             </div>
           )}
         </div>
