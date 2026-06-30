@@ -334,9 +334,9 @@ export default function WalletAndSubs() {
             </div>
             
             <div className="text-right">
-              <span className="text-[9px] font-bold text-emerald-300 block opacity-70 uppercase tracking-wider">Account Number</span>
-              <span className="text-sm font-black font-mono text-white tracking-widest block">
-                {currentUser.walletAccountNumber ? currentUser.walletAccountNumber.replace(/(\d{4})(\d{3})(\d{3})/, "$1 $2 $3") : "1024 859 384"}
+              <span className="text-[9px] font-bold text-emerald-300 block opacity-70 uppercase tracking-wider">GATEWAY</span>
+              <span className="text-xs font-black font-mono text-white tracking-widest block uppercase">
+                Paystack Verified
               </span>
             </div>
           </div>

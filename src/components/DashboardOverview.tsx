@@ -117,20 +117,9 @@ export default function DashboardOverview({ onSelectTab, onSelectSlip }: Dashboa
               <Coins className="w-6 h-6" />
             </div>
           </div>
-          <div className="border-t border-slate-50 mt-6 pt-4 space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400">Prepaid Credits / Starter Payments</span>
-              <button 
-                onClick={() => onSelectTab("billing")}
-                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline select-none cursor-pointer"
-              >
-                Fund Wallet →
-              </button>
-            </div>
-            <div className="bg-slate-50 rounded-xl p-2.5 text-[11px] border border-slate-100 flex justify-between items-center">
-              <span className="font-semibold text-slate-500">Moniepoint</span>
-              <span className="font-black text-emerald-700 font-mono tracking-wider">{currentUser.walletAccountNumber || "1024859384"}</span>
-            </div>
+          <div className="border-t border-slate-50 mt-6 pt-4 flex justify-between items-center text-xs">
+            <span className="text-slate-400">Prepaid Credits / Starter Payments</span>
+            <span className="font-bold text-emerald-600 uppercase tracking-wider text-[10px] bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Paystack Verified</span>
           </div>
         </div>
 
