@@ -240,11 +240,30 @@ export default function WalletAndSubs() {
   const handlePurchaseSub = (tier: SubscriptionTier, rawPrice: number) => {
     setErrorMsg("");
     setSuccessMsg("");
-    const res = purchaseSubscription(tier);
-    if (res.success) {
-      setSuccessMsg(res.message);
+    
+    // Check cost of the tier from settings
+    let cost = rawPrice;
+    if (tier === "Basic") cost = portalSettings.basicFee;
+    else if (tier === "Premium") cost = portalSettings.premiumFee;
+    else if (tier === "Unlimited") cost = portalSettings.unlimitedFee;
+
+    // Calculate required amount
+    const actualChargeAmount = Math.max(0, cost - currentUser.walletBalance);
+
+    if (actualChargeAmount > 0) {
+      // Direct payment flow to Paystack with specific amount
+      setFundingPurpose(tier.toLowerCase() as any);
+      setFundingAmount(actualChargeAmount.toString());
+      setIsCheckoutOpen(true);
+      payWithPaystack(actualChargeAmount);
     } else {
-      setErrorMsg(res.message);
+      // Already has sufficient balance, execute purchase directly
+      const res = purchaseSubscription(tier);
+      if (res.success) {
+        setSuccessMsg(res.message);
+      } else {
+        setErrorMsg(res.message);
+      }
     }
   };
 
