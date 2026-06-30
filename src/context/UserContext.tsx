@@ -41,6 +41,7 @@ interface UserContextType {
   // User Management
   setAdminStatus: (userId: string, isAdmin: boolean) => void;
   deleteUser: (userId: string) => void;
+  manualTopupUserByEmail: (email: string, amount: number) => Promise<{ success: boolean; message: string }>;
   
   // Support Chat Sessions
   supportChats: SupportChat[];
@@ -1251,6 +1252,56 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     deleteUserFromSupabase(userId).catch(err => console.warn("Error deleting user from Supabase:", err));
   };
 
+  const manualTopupUserByEmail = async (email: string, amount: number): Promise<{ success: boolean; message: string }> => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const foundUser = users.find((u) => u && u.email.toLowerCase() === trimmedEmail);
+
+    if (!foundUser) {
+      return { success: false, message: `No user account found with email address: "${email}". Please double-check the email.` };
+    }
+
+    if (amount <= 0) {
+      return { success: false, message: "Top-up amount must be greater than ₦0." };
+    }
+
+    const manualTx: Transaction = {
+      id: `tx-manual-${Math.random().toString(36).substr(2, 9)}`,
+      type: "credit",
+      amount,
+      description: `Manual Admin Top-up (by Admin)`,
+      date: new Date().toISOString()
+    };
+
+    const updatedUsers = users.map((u) => {
+      if (u && u.id === foundUser.id) {
+        return {
+          ...u,
+          walletBalance: (u.walletBalance || 0) + amount,
+          transactions: [manualTx, ...(u.transactions || [])]
+        };
+      }
+      return u;
+    });
+
+    setUsers(updatedUsers);
+    localStorage.setItem(SEED_USERS_KEY, JSON.stringify(updatedUsers));
+
+    const updatedTargetUser = updatedUsers.find((u) => u && u.id === foundUser.id);
+    if (updatedTargetUser) {
+      await saveUserToSupabase(updatedTargetUser).catch((err) =>
+        console.warn("Error saving user to Supabase after manual top-up:", err)
+      );
+    }
+
+    // If the manual top-up target is the current user, update their context
+    if (currentUser && currentUser.id === foundUser.id && updatedTargetUser) {
+      setCurrentUser(updatedTargetUser);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedTargetUser));
+    }
+
+    return { success: true, message: `Successfully manually credited ₦${amount.toLocaleString()} to ${foundUser.fullName} (${trimmedEmail}).` };
+  };
+
   // Support Chat Sessions
   const sendUserChatMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -1487,6 +1538,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         // User Admin Tools
         setAdminStatus,
         deleteUser,
+        manualTopupUserByEmail,
         
         // Support Chat
         supportChats,

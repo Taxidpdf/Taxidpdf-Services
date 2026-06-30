@@ -37,6 +37,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     rejectTopup, 
     setAdminStatus, 
     deleteUser,
+    manualTopupUserByEmail,
     portalSettings, 
     updateSettings,
     supportChats,
@@ -50,6 +51,66 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const [activeTab, setActiveTab] = useState<"metrics" | "topups" | "users" | "cms" | "support" | "slip-gen">("metrics");
   
+  // Manual admin top-up form state
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualAmount, setManualAmount] = useState("750");
+  const [manualStatus, setManualStatus] = useState<{ success?: boolean; message: string } | null>(null);
+  const [isSubmittingManual, setIsSubmittingManual] = useState(false);
+
+  const handleManualTopupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualEmail.trim()) {
+      setManualStatus({ success: false, message: "Please provide a valid email address." });
+      return;
+    }
+    const amountNum = parseFloat(manualAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      setManualStatus({ success: false, message: "Please enter a valid top-up amount greater than 0." });
+      return;
+    }
+
+    setIsSubmittingManual(true);
+    setManualStatus(null);
+    try {
+      const res = await manualTopupUserByEmail(manualEmail, amountNum);
+      setManualStatus(res);
+      if (res.success) {
+        setManualEmail("");
+      }
+    } catch (err: any) {
+      setManualStatus({ success: false, message: err?.message || "An error occurred during manual top-up." });
+    } finally {
+      setIsSubmittingManual(false);
+    }
+  };
+
+  // Helper to extract Paystack totals for a user
+  const getPaystackTotal = (user: any) => {
+    if (!user || !user.transactions) return 0;
+    return user.transactions
+      .filter((tx: any) => 
+        tx?.type === "credit" && 
+        (tx?.description?.toLowerCase()?.includes("paystack") || 
+         tx?.id?.startsWith("tx-paystack-") || 
+         tx?.id?.startsWith("tx-sandbox-"))
+      )
+      .reduce((sum: number, tx: any) => sum + (tx?.amount || 0), 0);
+  };
+
+  // Helper to extract Manual totals for a user
+  const getManualTotal = (user: any) => {
+    if (!user || !user.transactions) return 0;
+    return user.transactions
+      .filter((tx: any) => 
+        tx?.type === "credit" && 
+        (tx?.description?.toLowerCase()?.includes("manual") || 
+         tx?.description?.toLowerCase()?.includes("admin") || 
+         tx?.id?.startsWith("tx-manual-") || 
+         tx?.id?.startsWith("tx-appr-"))
+      )
+      .reduce((sum: number, tx: any) => sum + (tx?.amount || 0), 0);
+  };
+
   // CMS state
   const [landingTitle, setLandingTitle] = useState(portalSettings?.landingTitle || "");
   const [landingDescription, setLandingDescription] = useState(portalSettings?.landingDescription || "");
@@ -530,6 +591,35 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   const activeChatSession = supportChats.find((c) => c.id === selectedChatId);
 
+  // Extract and sort all credit transactions across all registered users
+  const globalFundingAudit = (users || []).flatMap((user) => {
+    return (user?.transactions || [])
+      .filter((tx) => tx?.type === "credit")
+      .map((tx) => {
+        let fundingMethod: "Paystack Gateway" | "Manual Admin Top-up" | "Manual Transfer Approval" | "System Credit" = "System Credit";
+        const desc = tx?.description?.toLowerCase() || "";
+        const txId = tx?.id || "";
+        
+        if (desc.includes("paystack") || txId.startsWith("tx-paystack-") || txId.startsWith("tx-sandbox-")) {
+          fundingMethod = "Paystack Gateway";
+        } else if (desc.includes("manual admin") || desc.includes("by admin") || txId.startsWith("tx-manual-")) {
+          fundingMethod = "Manual Admin Top-up";
+        } else if (desc.includes("approved manual") || txId.startsWith("tx-appr-")) {
+          fundingMethod = "Manual Transfer Approval";
+        }
+        
+        return {
+          id: tx.id,
+          userEmail: user?.email || "Unknown",
+          userName: user?.fullName || "Unknown",
+          amount: tx.amount,
+          date: tx.date,
+          description: tx.description,
+          fundingMethod
+        };
+      });
+  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
       
@@ -712,6 +802,77 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <td className="py-3 text-right font-mono font-bold text-emerald-400">₦{u.walletBalance.toLocaleString()}</td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Global Funding Audit Logs */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">Global Funding & Payment Ledger</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Real-time audit stream of all Paystack deposits and Manual administrator override top-ups.</p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-800 text-[10px] font-extrabold uppercase text-slate-500 tracking-wider">
+                        <th className="pb-3">User</th>
+                        <th className="pb-3 text-center">Date & Time</th>
+                        <th className="pb-3 text-center">Amount</th>
+                        <th className="pb-3 text-center">Payment Method</th>
+                        <th className="pb-3 text-right">Reference / Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/40 text-slate-300">
+                      {globalFundingAudit.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-slate-500 font-semibold text-xs">
+                            No payment or funding transactions recorded in the system.
+                          </td>
+                        </tr>
+                      ) : (
+                        globalFundingAudit.map((tx) => (
+                          <tr key={tx.id} className="hover:bg-slate-850/30">
+                            <td className="py-3">
+                              <span className="font-extrabold text-white block">{tx.userName}</span>
+                              <span className="text-[10px] text-slate-400 font-mono block">{tx.userEmail}</span>
+                            </td>
+                            <td className="py-3 text-center text-slate-400 font-mono text-[10px]">
+                              {new Date(tx.date).toLocaleDateString()} {new Date(tx.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td className="py-3 text-center font-mono font-bold text-emerald-400 text-sm">
+                              +₦{tx.amount.toLocaleString()}
+                            </td>
+                            <td className="py-3 text-center">
+                              {tx.fundingMethod === "Paystack Gateway" && (
+                                <span className="bg-emerald-950/40 text-emerald-400 border border-emerald-900/40 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider inline-block">
+                                  Paystack Checkout
+                                </span>
+                              )}
+                              {tx.fundingMethod === "Manual Admin Top-up" && (
+                                <span className="bg-amber-950/40 text-amber-400 border border-amber-900/40 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider inline-block">
+                                  Admin Manual Credit
+                                </span>
+                              )}
+                              {tx.fundingMethod === "Manual Transfer Approval" && (
+                                <span className="bg-indigo-950/40 text-indigo-400 border border-indigo-900/40 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider inline-block">
+                                  Transfer Claim Approved
+                                </span>
+                              )}
+                              {tx.fundingMethod === "System Credit" && (
+                                <span className="bg-slate-950 text-slate-400 border border-slate-800 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider inline-block">
+                                  System Alloc
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-3 text-right font-medium text-slate-400 text-[11px] max-w-[200px] truncate" title={tx.description}>
+                              {tx.description}
+                            </td>
+                          </tr>
+                        ))
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -1333,6 +1494,61 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
           {/* TAB 5: User Management list */}
           {activeTab === "users" && (
             <div className="space-y-6 animate-fadeIn">
+              
+              {/* Manual Credit Top-Up Section */}
+              <div id="manual-topup-panel" className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">Direct Manual Credit Top-Up Override</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Fund any corporate agent's wallet balance directly by typing or clicking "Quick Top-up" on their row. Credits reflect automatically.</p>
+                </div>
+
+                <form onSubmit={handleManualTopupSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">User Account Email</label>
+                    <input
+                      type="email"
+                      placeholder="e.g. taxpayer@example.com"
+                      value={manualEmail}
+                      onChange={(e) => setManualEmail(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Top-up Amount (₦)</label>
+                    <select
+                      value={manualAmount}
+                      onChange={(e) => setManualAmount(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none transition"
+                    >
+                      <option value="750">₦750 (On-Demand Retrieval)</option>
+                      <option value="1500">₦1,500 (Double Slip Promo)</option>
+                      <option value="2500">₦2,500 (Basic Plan Prorated)</option>
+                      <option value="5000">₦5,000 (Premium Plan Prorated)</option>
+                      <option value="10000">₦10,000 (Unlimited Plan Prorated)</option>
+                      <option value="20000">₦20,000 (Bulk Agent Credit)</option>
+                      <option value="50000">₦50,000 (Mega Corporate Credit)</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingManual}
+                    className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-extrabold uppercase tracking-wider py-2 px-4 rounded-xl cursor-pointer transition h-[36px] flex items-center justify-center gap-2"
+                  >
+                    {isSubmittingManual ? "Processing..." : "Credit User Balance"}
+                  </button>
+                </form>
+
+                {manualStatus && (
+                  <div className={`p-3 rounded-xl text-xs font-semibold ${manualStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
+                    {manualStatus.message}
+                  </div>
+                )}
+              </div>
+
+              {/* Registered Users Table */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
                 <div>
                   <h3 className="text-sm font-extrabold text-white">TaxID Registered User Ledger</h3>
@@ -1347,6 +1563,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                         <th className="pb-3">Email</th>
                         <th className="pb-3">NIN Number</th>
                         <th className="pb-3 text-center">Wallet Credit</th>
+                        <th className="pb-3 text-center">Paystack Funding</th>
+                        <th className="pb-3 text-center">Manual Credit</th>
                         <th className="pb-3 text-center">Permissions</th>
                         <th className="pb-3 text-right">Actions</th>
                       </tr>
@@ -1361,6 +1579,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                           <td className="py-3.5 font-mono text-slate-400">{u?.email || ""}</td>
                           <td className="py-3.5 font-mono text-slate-400">{u?.nin || "NOT LOADED"}</td>
                           <td className="py-3.5 text-center font-mono font-bold text-emerald-400">₦{(u?.walletBalance ?? 0).toLocaleString()}</td>
+                          <td className="py-3.5 text-center font-mono font-bold text-slate-300">₦{getPaystackTotal(u).toLocaleString()}</td>
+                          <td className="py-3.5 text-center font-mono font-bold text-amber-400">₦{getManualTotal(u).toLocaleString()}</td>
                           <td className="py-3.5 text-center">
                             <button
                               onClick={() => setAdminStatus(u.id, !u.isAdmin)}
@@ -1374,16 +1594,31 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                             </button>
                           </td>
                           <td className="py-3.5 text-right">
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Are you absolutely sure you want to delete user ${u?.fullName || "this user"} from the ledger?`)) {
-                                  deleteUser(u.id);
-                                }
-                              }}
-                              className="text-red-400 hover:text-red-500 font-extrabold text-[10px] uppercase tracking-wider cursor-pointer"
-                            >
-                              Delete
-                            </button>
+                            <div className="flex items-center justify-end gap-3.5">
+                              <button
+                                onClick={() => {
+                                  setManualEmail(u?.email || "");
+                                  setManualStatus(null);
+                                  const formElement = document.getElementById("manual-topup-panel");
+                                  if (formElement) {
+                                    formElement.scrollIntoView({ behavior: "smooth", block: "start" });
+                                  }
+                                }}
+                                className="text-emerald-400 hover:text-emerald-300 font-extrabold text-[10px] uppercase tracking-wider cursor-pointer whitespace-nowrap"
+                              >
+                                Quick Top-up
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Are you absolutely sure you want to delete user ${u?.fullName || "this user"} from the ledger?`)) {
+                                    deleteUser(u.id);
+                                  }
+                                }}
+                                className="text-red-400 hover:text-red-500 font-extrabold text-[10px] uppercase tracking-wider cursor-pointer"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
