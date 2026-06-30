@@ -26,7 +26,9 @@ import {
   Building,
   DollarSign,
   X,
-  ShieldAlert
+  ShieldAlert,
+  Sun,
+  Moon
 } from "lucide-react";
 
 export function RotatingWord() {
@@ -142,6 +144,23 @@ export function EstherRevealHeadline({ text }: { text: string }) {
 export default function LandingPage() {
   const { login, signup, users, portalSettings } = useUser();
   const [isLogin, setIsLogin] = useState(true);
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
   
   // Auth Form Fields
   const [fullName, setFullName] = useState("");
@@ -334,6 +353,15 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-emerald-600 transition">Features</a>
             <a href="#pricing" className="hover:text-emerald-600 transition">Pricing</a>
             <a href="#faq" className="hover:text-emerald-600 transition">FAQ Help</a>
+            
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-2 rounded-xl hover:bg-slate-100 transition cursor-pointer text-slate-600 flex items-center justify-center shrink-0"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun className="w-4.5 h-4.5 text-amber-500" /> : <Moon className="w-4.5 h-4.5 text-slate-600" />}
+            </button>
+
             <span className="h-4 w-[1px] bg-slate-200" />
             <button 
               onClick={() => handleScrollToAuth(true)}
@@ -350,7 +378,14 @@ export default function LandingPage() {
           </div>
 
           {/* Mobile CTAs */}
-          <div className="flex md:hidden gap-1.5">
+          <div className="flex md:hidden items-center gap-1.5">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className="p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer text-slate-600 flex items-center justify-center shrink-0"
+              title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4 text-slate-600" />}
+            </button>
             <button 
               onClick={() => handleScrollToAuth(true)}
               className="px-3 py-1.5 text-xs font-bold text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
@@ -1022,47 +1057,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 6. CORPORATE DISCLAIMER FOOTER */}
-      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800" id="landing-footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-          
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pb-8 border-b border-slate-800">
-            <div>
-              <span className="text-white font-extrabold text-base tracking-tight font-sans block">
-                TaxID<span className="text-emerald-500">PDF</span>.com
-              </span>
-              <p className="text-xs text-slate-500 mt-1 max-w-md">
-                An independent high-speed digital helper gateway designed for automated non-individual/individual Nigerian TIN document layout compilation.
-              </p>
-            </div>
-            <div className="flex gap-4 text-xs font-bold text-slate-400">
-              <button onClick={() => setActiveInfoModal("security")} className="hover:text-emerald-500 cursor-pointer bg-transparent border-none p-0 font-bold">Security Ledger</button>
-              <span>•</span>
-              <button onClick={() => setActiveInfoModal("support")} className="hover:text-emerald-500 cursor-pointer bg-transparent border-none p-0 font-bold">Support Helpline</button>
-              <span>•</span>
-              <button onClick={() => setActiveInfoModal("legal")} className="hover:text-emerald-500 cursor-pointer bg-transparent border-none p-0 font-bold">Legal Counsel</button>
-            </div>
-          </div>
-
-          <div className="bg-slate-950/65 rounded-2xl p-5 border border-slate-800/80 space-y-2 max-w-4xl">
-            <span className="text-[10px] font-black text-amber-500 uppercase tracking-wider block">Official Notice & Terms of Usage</span>
-            <p className="text-[10px] text-slate-500 leading-relaxed">
-              {portalSettings.disclaimerText}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-            <p className="text-[10px] text-slate-500 font-semibold">
-              &copy; {new Date().getFullYear()} taxidpdf.com Portal. Direct Database Wrapper.
-            </p>
-            <div className="text-[10px] text-emerald-500 font-mono font-bold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>GATEWAY ENCRYPTED VIA SECURE 256-BIT SSL PROTOCOLS</span>
-            </div>
-          </div>
-
-        </div>
-      </footer>
+      {/* FOOTER REMOVED ACCORDING TO USER DIRECTIVE */}
 
       {/* Information Modals Overlay */}
       {activeInfoModal && (

@@ -5,7 +5,6 @@ import SearchForm from "./components/SearchForm";
 import CertificatePreview from "./components/CertificatePreview";
 import FAQ from "./components/FAQ";
 import TaxpayerNews from "./components/TaxpayerNews";
-import Footer from "./components/Footer";
 import LandingPage, { RotatingWord } from "./components/LandingPage";
 import DashboardOverview from "./components/DashboardOverview";
 import WalletAndSubs from "./components/WalletAndSubs";
@@ -492,9 +491,6 @@ export default function App() {
         <FAQ />
 
       </main>
-
-      {/* Footer component */}
-      <Footer />
 
       {/* Global AI Live Support Chat Widget */}
       <SupportChatWidget />

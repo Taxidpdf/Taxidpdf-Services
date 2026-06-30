@@ -1,1 +1,122 @@
 @import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+/* --- Elegant Dark Mode Variables & Global Overrides --- */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.dark body {
+  background-color: #090d16 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Base Wrapper & Card Overrides */
+html.dark .bg-slate-50,
+html.dark .bg-slate-100,
+html.dark .bg-slate-100\/50,
+html.dark .bg-slate-50\/80 {
+  background-color: #0d1527 !important;
+}
+
+html.dark .bg-white {
+  background-color: #121e36 !important;
+  border-color: #1e2e4e !important;
+  color: #f8fafc !important;
+}
+
+/* Border Overrides */
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/50,
+html.dark .border-slate-200\/60,
+html.dark .border-slate-100\/40 {
+  border-color: #1e2e4e !important;
+}
+
+/* Typography Overrides */
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-750,
+html.dark h1,
+html.dark h2,
+html.dark h3 {
+  color: #ffffff !important;
+}
+
+html.dark .text-slate-700,
+html.dark .text-slate-600,
+html.dark .text-slate-650 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+/* Sticky Landing Navbar specific overrides */
+html.dark #landing-navbar {
+  background-color: rgba(18, 30, 54, 0.9) !important;
+  border-color: #1e2e4e !important;
+}
+
+/* Form input, select and textarea overrides */
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #0a0f1d !important;
+  border-color: #1e2e4e !important;
+  color: #ffffff !important;
+}
+
+html.dark input::placeholder,
+html.dark select::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Nav links in landing page */
+html.dark #landing-navbar a,
+html.dark #landing-navbar button {
+  color: #cbd5e1;
+}
+html.dark #landing-navbar a:hover,
+html.dark #landing-navbar button:hover {
+  color: #10b981;
+}
+
+/* FAQ and accordion items */
+html.dark .bg-slate-50\/50 {
+  background-color: #0d1527 !important;
+}
+
+/* Custom shadow improvements for dark mode */
+html.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+html.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+html.dark .shadow-xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .shadow-2xl {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Active navigation tab buttons when selected */
+html.dark .bg-emerald-600 {
+  background-color: #059669 !important;
+}
+
+/* Footer-like elements, if any are nested inside other pages */
+html.dark footer {
+  background-color: #060a12 !important;
+  border-color: #141f36 !important;
+}

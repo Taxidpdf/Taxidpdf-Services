@@ -1,5 +1,5 @@
 import React from "react";
-import { ShieldCheck, Landmark, Globe, LogOut } from "lucide-react";
+import { ShieldCheck, Landmark, Globe, LogOut, Sun, Moon } from "lucide-react";
 import { useUser } from "../context/UserContext";
 
 interface HeaderProps {
@@ -9,6 +9,23 @@ interface HeaderProps {
 
 export default function Header({ onEnterAdmin, onLogoClick }: HeaderProps) {
   const { currentUser, logout } = useUser();
+
+  const [isDarkMode, setIsDarkMode] = React.useState(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.classList.contains("dark") || localStorage.getItem("theme") === "dark";
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [isDarkMode]);
 
   const getInitials = (name: string) => {
     if (!name) return "U";
@@ -70,13 +87,22 @@ export default function Header({ onEnterAdmin, onLogoClick }: HeaderProps) {
 
           {/* Quick logout trigger on mobile */}
           {currentUser && (
-            <button 
-              onClick={logout}
-              className="md:hidden p-2 text-slate-400 hover:text-red-500 transition cursor-pointer"
-              title="Log Out"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1.5 md:hidden">
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 text-slate-400 hover:text-amber-500 transition cursor-pointer"
+                title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              >
+                {isDarkMode ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5" />}
+              </button>
+              <button 
+                onClick={logout}
+                className="p-2 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                title="Log Out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            </div>
           )}
         </div>
 
@@ -115,6 +141,17 @@ export default function Header({ onEnterAdmin, onLogoClick }: HeaderProps) {
                   </div>
                 </div>
                 
+                <div className="h-4 w-[1px] bg-slate-200" />
+
+                {/* Theme Toggle Button */}
+                <button
+                  onClick={() => setIsDarkMode(!isDarkMode)}
+                  className="p-1 rounded-lg hover:bg-slate-200/50 transition cursor-pointer text-slate-500 flex items-center justify-center shrink-0"
+                  title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                  {isDarkMode ? <Sun className="w-4 h-4 text-amber-500" /> : <Moon className="w-4 h-4" />}
+                </button>
+
                 <div className="h-4 w-[1px] bg-slate-200 hidden sm:block" />
 
                 <button
