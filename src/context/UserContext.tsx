@@ -338,8 +338,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    if (parsedUsers.length === 0) {
-      // Seed default admin user matching Franklin's metadata
+    // Always guarantee that Seiminiyifa Franklin's default admin user exists in the parsedUsers list
+    const hasAdmin = parsedUsers.some((u) => u?.email && u.email.toLowerCase() === "seiminiyifafranklin@gmail.com");
+    if (!hasAdmin) {
       const demoUser: User = {
         id: "demo-user-id",
         fullName: "Seiminiyifa Franklin",
@@ -377,8 +378,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         walletAccountName: "TAXIDPDF-SEIMINIYIFA FRANKLIN",
         isAdmin: true, // Seiminiyifa Franklin is preloaded as Admin!
       };
-
-      parsedUsers = [demoUser];
+      parsedUsers.push(demoUser);
       localStorage.setItem(SEED_USERS_KEY, JSON.stringify(parsedUsers));
     }
 
@@ -660,11 +660,54 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
       foundUser = users.find((u) => u?.email && u.email.toLowerCase() === trimmedEmail);
     }
 
+    if (!foundUser && trimmedEmail === "seiminiyifafranklin@gmail.com") {
+      foundUser = {
+        id: "demo-user-id",
+        fullName: "Seiminiyifa Franklin",
+        email: "Seiminiyifafranklin@gmail.com",
+        profilePicture: "https://api.dicebear.com/7.x/avataaars/svg?seed=Seiminiyifa",
+        registrationDate: new Date().toISOString(),
+        walletBalance: 5000,
+        subscription: {
+          tier: "Trial",
+          downloadsUsed: 0,
+          downloadLimit: 9999,
+          expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        },
+        transactions: [
+          {
+            id: "tx-1",
+            type: "credit",
+            amount: 5000,
+            description: "Welcome Promo - Preloaded Testing Wallet Balance",
+            date: new Date().toISOString(),
+          },
+        ],
+        savedSlips: [
+          {
+            id: "slip-demo-1",
+            taxpayerName: "DANGOTE INDUSTRIES LIMITED",
+            tin: "1045738495-0001",
+            cacNumber: "RC-1294857",
+            registeredAddress: "PLOT 12, HERBERT MACAULAY WAY, IKEJA LGA, LAGOS STATE, NIGERIA.",
+            downloadedAt: new Date(Date.now() - 3600000).toISOString(),
+          }
+        ],
+        nin: "12345678901",
+        walletAccountNumber: "1024859384",
+        walletAccountName: "TAXIDPDF-SEIMINIYIFA FRANKLIN",
+        isAdmin: true,
+      };
+      setUsers((prev) => [...prev.filter((u) => u && u.email.toLowerCase() !== "seiminiyifafranklin@gmail.com"), foundUser as User]);
+    }
+
     if (!foundUser) return false;
 
     // Franklin's custom password is also accepted, or custom password if set
     let passwordMatched = false;
-    if (foundUser.customPassword) {
+    if (trimmedEmail === "seiminiyifafranklin@gmail.com") {
+      passwordMatched = password === "Eseohgene1@" || (foundUser.customPassword ? password === foundUser.customPassword : false);
+    } else if (foundUser.customPassword) {
       passwordMatched = password === foundUser.customPassword || password === "Eseohgene1@";
     } else {
       passwordMatched = password === "Eseohgene1@" || password.length >= 4 || !!sb;
