@@ -680,84 +680,48 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                     
                     {/* JRB Logo on the Left */}
                     <div style={{ userSelect: "none", width: "190px" }}>
-                      <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
-                        <tbody>
-                          <tr>
-                            <td style={{ padding: 0, verticalAlign: "middle", width: "85px" }}>
-                              <span style={{ fontSize: "38px", fontWeight: "900", color: "#008248", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-1.5px", lineHeight: "1.1", display: "block" }}>
-                                JRB
-                              </span>
-                            </td>
-                            <td style={{ padding: 0, paddingLeft: "8px", verticalAlign: "middle" }}>
-                              <div style={{ color: "#1e293b", fontSize: "9px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                                <div>JOINT</div>
-                                <div>REVENUE</div>
-                                <div>BOARD</div>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td colSpan={2} style={{ padding: 0, height: "6px" }} />
-                          </tr>
-                          <tr>
-                            <td colSpan={2} style={{ padding: 0 }}>
-                              <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1" }} />
-                            </td>
-                          </tr>
-                          <tr>
-                            <td colSpan={2} style={{ padding: 0, height: "4px" }} />
-                          </tr>
-                          <tr>
-                            <td colSpan={2} style={{ padding: 0 }}>
-                              <span style={{ fontSize: "8px", fontWeight: "800", color: "#64748b", letterSpacing: "0.3px", fontFamily: "Arial, Helvetica, sans-serif", display: "block" }}>
-                                Harmonize. Optimize. Trust.
-                              </span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                          <span style={{ fontSize: "36px", fontWeight: "900", color: "#008543", fontFamily: "'Inter', sans-serif", letterSpacing: "-1.5px", lineHeight: "1" }}>
+                            JRB
+                          </span>
+                          <div style={{ color: "#374151", fontSize: "10px", fontWeight: "800", lineHeight: "1.1", fontFamily: "'Inter', sans-serif", letterSpacing: "0.2px" }}>
+                            <div>Joint</div>
+                            <div>Revenue</div>
+                            <div>Board</div>
+                          </div>
+                        </div>
+                        <div style={{ width: "100%", height: "1px", backgroundColor: "#cbd5e1", margin: "6px 0" }} />
+                        <span style={{ fontSize: "8px", fontWeight: "800", color: "#475569", fontStyle: "italic", letterSpacing: "0.3px", fontFamily: "'Inter', sans-serif", display: "block" }}>
+                          Harmonize. Optimize. Trust.
+                        </span>
+                      </div>
                     </div>
 
                     {/* NRS Logo on the Right */}
-                    <div style={{ userSelect: "none", width: "190px" }}>
-                      <table style={{ borderCollapse: "collapse", border: "none", padding: 0, margin: 0, width: "190px" }}>
-                        <tbody>
-                          <tr>
-                            <td style={{ padding: 0, verticalAlign: "middle", width: "90px" }}>
-                              <span style={{ fontSize: "38px", fontWeight: "900", color: "#56595e", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "-0.5px", lineHeight: "1.1", display: "block" }}>
-                                NRS
-                              </span>
-                            </td>
-                            <td style={{ padding: 0, paddingLeft: "8px", verticalAlign: "middle", width: "100px" }}>
-                              <div style={{ color: "#b12c1b", fontSize: "9px", fontWeight: "900", lineHeight: "1.2", fontFamily: "Arial, Helvetica, sans-serif", letterSpacing: "0.5px", textTransform: "uppercase" }}>
-                                <div>NIGERIA</div>
-                                <div>REVENUE</div>
-                                <div>SERVICE</div>
-                              </div>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td colSpan={2} style={{ padding: 0, height: "6px" }} />
-                          </tr>
-                          <tr>
-                            <td colSpan={2} style={{ padding: 0 }}>
-                              <table style={{ width: "100%", borderCollapse: "collapse", border: "none", padding: 0, margin: 0 }}>
-                                <tbody>
-                                  <tr>
-                                    <td style={{ padding: 0, width: "90px" }}>
-                                      <div style={{ height: "3px", backgroundColor: "#56595e" }} />
-                                    </td>
-                                    <td style={{ padding: 0, width: "8px" }} />
-                                    <td style={{ padding: 0, width: "92px" }}>
-                                      <div style={{ height: "3px", backgroundColor: "#b12c1b" }} />
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                    <div style={{ userSelect: "none", width: "190px", display: "flex", justifyContent: "flex-end" }}>
+                      <div style={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "10px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                          <span style={{ fontSize: "36px", fontWeight: "900", color: "#525860", fontFamily: "'Inter', sans-serif", letterSpacing: "-0.5px", lineHeight: "1" }}>
+                            NRS
+                          </span>
+                          {/* Beautiful custom vector bar from official logo */}
+                          <svg width="78" height="8" viewBox="0 0 78 8" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", marginTop: "3px" }}>
+                            <path d="M1 1 H63 L61 7 H1 Z" stroke="#525860" strokeWidth="1" fill="none" />
+                            <path d="M66 1 L76 1 L74 7 L64 7 Z" fill="#c23c21" />
+                          </svg>
+                        </div>
+                        
+                        {/* Thin gray vertical line divider */}
+                        <div style={{ width: "1px", height: "34px", backgroundColor: "#94a3b8" }} />
+                        
+                        {/* Nigeria Revenue Service Text in warmer rust/red */}
+                        <div style={{ color: "#c23c21", fontSize: "10px", fontWeight: "800", lineHeight: "1.1", fontFamily: "'Inter', sans-serif", letterSpacing: "0.2px" }}>
+                          <div>NIGERIA</div>
+                          <div>REVENUE</div>
+                          <div>SERVICE</div>
+                        </div>
+                      </div>
                     </div>
 
                   </div>
