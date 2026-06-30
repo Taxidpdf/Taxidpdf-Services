@@ -153,13 +153,9 @@ export default function LandingPage() {
   });
 
   React.useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
+    // Keep document always in light mode as requested by the user, while keeping the switch button functional
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
   }, [isDarkMode]);
   
   // Auth Form Fields
