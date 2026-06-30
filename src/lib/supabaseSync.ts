@@ -39,11 +39,29 @@ export async function fetchUsersFromSupabase(): Promise<User[] | null> {
     const { data: profiles, error: pErr } = await supabase.from('profiles').select('*');
     if (pErr) throw pErr;
 
-    const { data: transactions, error: tErr } = await supabase.from('transactions').select('*');
-    if (tErr) throw tErr;
+    let transactions: any[] = [];
+    try {
+      const { data: tData, error: tErr } = await supabase.from('transactions').select('*');
+      if (tErr) {
+        console.warn("Warning fetching transactions from Supabase (falling back to empty):", tErr.message);
+      } else if (tData) {
+        transactions = tData;
+      }
+    } catch (err) {
+      console.warn("Caught error fetching transactions:", err);
+    }
 
-    const { data: slips, error: sErr } = await supabase.from('saved_slips').select('*');
-    if (sErr) throw sErr;
+    let slips: any[] = [];
+    try {
+      const { data: sData, error: sErr } = await supabase.from('saved_slips').select('*');
+      if (sErr) {
+        console.warn("Warning fetching saved slips from Supabase (falling back to empty):", sErr.message);
+      } else if (sData) {
+        slips = sData;
+      }
+    } catch (err) {
+      console.warn("Caught error fetching saved slips:", err);
+    }
 
     return (profiles || []).map(p => {
       const userTransactions: Transaction[] = (transactions || [])

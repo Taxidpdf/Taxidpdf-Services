@@ -504,6 +504,9 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
               (lookupEmail && u.email.toLowerCase() === lookupEmail.toLowerCase())
             );
             if (matchedDbUser) {
+              if (activeUserId && matchedDbUser.id !== activeUserId) {
+                matchedDbUser.id = activeUserId;
+              }
               setCurrentUser(matchedDbUser);
               localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(matchedDbUser));
             }
@@ -631,6 +634,18 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             setUsers(dbUsers);
             localStorage.setItem(SEED_USERS_KEY, JSON.stringify(dbUsers));
             foundUser = dbUsers.find(u => u.id === data.user.id || u.email.toLowerCase() === trimmedEmail);
+            if (foundUser) {
+              foundUser.id = data.user.id;
+            }
+          }
+          if (!foundUser) {
+            const localMatched = users.find((u) => u?.email && u.email.toLowerCase() === trimmedEmail);
+            if (localMatched) {
+              foundUser = {
+                ...localMatched,
+                id: data.user.id
+              };
+            }
           }
         }
       } catch (e) {
