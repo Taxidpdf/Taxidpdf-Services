@@ -87,11 +87,20 @@ export async function fetchUsersFromSupabase(): Promise<User[] | null> {
         }))
         .sort((a, b) => new Date(b.downloadedAt).getTime() - new Date(a.downloadedAt).getTime());
 
+      let customPassword: string | undefined = undefined;
+      let rawProfilePic = p.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.full_name)}`;
+      if (p.profile_picture && p.profile_picture.includes("#pw:")) {
+        const parts = p.profile_picture.split("#pw:");
+        rawProfilePic = parts[0];
+        customPassword = decodeURIComponent(parts[1]);
+      }
+
       return {
         id: p.id,
         fullName: p.full_name,
         email: p.email,
-        profilePicture: p.profile_picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(p.full_name)}`,
+        profilePicture: rawProfilePic,
+        customPassword,
         registrationDate: p.registration_date,
         walletBalance: Number(p.wallet_balance),
         subscription: {
@@ -119,6 +128,9 @@ export async function saveUserToSupabase(user: User): Promise<void> {
   if (!supabase) return;
 
   const uuid = toUUID(user.id);
+  const finalProfilePic = user.customPassword
+    ? `${user.profilePicture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(user.fullName)}`}#pw:${encodeURIComponent(user.customPassword)}`
+    : user.profilePicture;
 
   try {
     // 1. Upsert Profile
@@ -126,7 +138,7 @@ export async function saveUserToSupabase(user: User): Promise<void> {
       id: uuid,
       full_name: user.fullName,
       email: user.email,
-      profile_picture: user.profilePicture,
+      profile_picture: finalProfilePic,
       registration_date: user.registrationDate,
       wallet_balance: user.walletBalance,
       nin: user.nin || null,

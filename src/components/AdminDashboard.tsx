@@ -38,6 +38,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
     setAdminStatus, 
     deleteUser,
     manualTopupUserByEmail,
+    adminCreateUser,
+    adminResetPassword,
     portalSettings, 
     updateSettings,
     supportChats,
@@ -54,8 +56,23 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   // Manual admin top-up form state
   const [manualEmail, setManualEmail] = useState("");
   const [manualAmount, setManualAmount] = useState("750");
+  const [customAmountVal, setCustomAmountVal] = useState("");
   const [manualStatus, setManualStatus] = useState<{ success?: boolean; message: string } | null>(null);
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
+
+  // Administrative Create User form state
+  const [createUserFullName, setCreateUserFullName] = useState("");
+  const [createUserEmail, setCreateUserEmail] = useState("");
+  const [createUserPassword, setCreateUserPassword] = useState("");
+  const [createUserNIN, setCreateUserNIN] = useState("");
+  const [createUserStatus, setCreateUserStatus] = useState<{ success?: boolean; message: string } | null>(null);
+  const [isSubmittingCreateUser, setIsSubmittingCreateUser] = useState(false);
+
+  // Administrative Reset Password state
+  const [resettingUser, setResettingUser] = useState<any | null>(null);
+  const [resetNewPassword, setResetNewPassword] = useState("");
+  const [resetPasswordStatus, setResetPasswordStatus] = useState<{ success?: boolean; message: string } | null>(null);
+  const [isSubmittingReset, setIsSubmittingReset] = useState(false);
 
   const handleManualTopupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +80,8 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setManualStatus({ success: false, message: "Please provide a valid email address." });
       return;
     }
-    const amountNum = parseFloat(manualAmount);
+    const finalAmountStr = manualAmount === "custom" ? customAmountVal : manualAmount;
+    const amountNum = parseFloat(finalAmountStr);
     if (isNaN(amountNum) || amountNum <= 0) {
       setManualStatus({ success: false, message: "Please enter a valid top-up amount greater than 0." });
       return;
@@ -76,11 +94,73 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       setManualStatus(res);
       if (res.success) {
         setManualEmail("");
+        setCustomAmountVal("");
       }
     } catch (err: any) {
       setManualStatus({ success: false, message: err?.message || "An error occurred during manual top-up." });
     } finally {
       setIsSubmittingManual(false);
+    }
+  };
+
+  const handleAdminCreateUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createUserFullName.trim()) {
+      setCreateUserStatus({ success: false, message: "Please provide the user's full name." });
+      return;
+    }
+    if (!createUserEmail.trim()) {
+      setCreateUserStatus({ success: false, message: "Please provide the user's email address." });
+      return;
+    }
+
+    setIsSubmittingCreateUser(true);
+    setCreateUserStatus(null);
+    try {
+      const res = await adminCreateUser(
+        createUserFullName.trim(),
+        createUserEmail.trim(),
+        createUserPassword.trim() || undefined,
+        createUserNIN.trim() || undefined
+      );
+      setCreateUserStatus(res);
+      if (res.success) {
+        setCreateUserFullName("");
+        setCreateUserEmail("");
+        setCreateUserPassword("");
+        setCreateUserNIN("");
+      }
+    } catch (err: any) {
+      setCreateUserStatus({ success: false, message: err?.message || "An error occurred during account creation." });
+    } finally {
+      setIsSubmittingCreateUser(false);
+    }
+  };
+
+  const handleAdminResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resettingUser) return;
+    if (!resetNewPassword.trim() || resetNewPassword.trim().length < 4) {
+      setResetPasswordStatus({ success: false, message: "Password must be at least 4 characters." });
+      return;
+    }
+
+    setIsSubmittingReset(true);
+    setResetPasswordStatus(null);
+    try {
+      const res = await adminResetPassword(resettingUser.id, resetNewPassword.trim());
+      setResetPasswordStatus(res);
+      if (res.success) {
+        setResetNewPassword("");
+        setTimeout(() => {
+          setResettingUser(null);
+          setResetPasswordStatus(null);
+        }, 1500);
+      }
+    } catch (err: any) {
+      setResetPasswordStatus({ success: false, message: err?.message || "An error occurred during password reset." });
+    } finally {
+      setIsSubmittingReset(false);
     }
   };
 
@@ -1502,7 +1582,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   <p className="text-[10px] text-slate-400 mt-0.5">Fund any corporate agent's wallet balance directly by typing or clicking "Quick Top-up" on their row. Credits reflect automatically.</p>
                 </div>
 
-                <form onSubmit={handleManualTopupSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <form onSubmit={handleManualTopupSubmit} className={`grid grid-cols-1 ${manualAmount === "custom" ? "md:grid-cols-4" : "md:grid-cols-3"} gap-4 items-end`}>
                   <div className="space-y-1.5">
                     <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">User Account Email</label>
                     <input
@@ -1529,8 +1609,24 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                       <option value="10000">₦10,000 (Unlimited Plan Prorated)</option>
                       <option value="20000">₦20,000 (Bulk Agent Credit)</option>
                       <option value="50000">₦50,000 (Mega Corporate Credit)</option>
+                      <option value="custom">Custom Amount...</option>
                     </select>
                   </div>
+
+                  {manualAmount === "custom" && (
+                    <div className="space-y-1.5 animate-fadeIn">
+                      <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Enter Custom Amount (₦)</label>
+                      <input
+                        type="number"
+                        placeholder="e.g. 15000"
+                        value={customAmountVal}
+                        onChange={(e) => setCustomAmountVal(e.target.value)}
+                        className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono font-bold text-white placeholder-slate-600 outline-none transition"
+                        min="1"
+                        required
+                      />
+                    </div>
+                  )}
 
                   <button
                     type="submit"
@@ -1544,6 +1640,78 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 {manualStatus && (
                   <div className={`p-3 rounded-xl text-xs font-semibold ${manualStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
                     {manualStatus.message}
+                  </div>
+                )}
+              </div>
+
+              {/* Administrative Create User Account Panel */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div>
+                  <h3 className="text-sm font-extrabold text-white">Create New Corporate Agent Account</h3>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Manually register a corporate agent. Once created, they can immediately log in using their credentials.</p>
+                </div>
+
+                <form onSubmit={handleAdminCreateUserSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Full Name / Corporate Agent</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Franklin Services Ltd"
+                      value={createUserFullName}
+                      onChange={(e) => setCreateUserFullName(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="e.g. franklin@example.com"
+                      value={createUserEmail}
+                      onChange={(e) => setCreateUserEmail(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Default Password (Optional)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 123456"
+                      value={createUserPassword}
+                      onChange={(e) => setCreateUserPassword(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 flex flex-col justify-end">
+                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">NIN Number (Optional)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. 12345678901"
+                        value={createUserNIN}
+                        onChange={(e) => setCreateUserNIN(e.target.value)}
+                        className="flex-1 bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition animate-fadeIn"
+                        maxLength={11}
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSubmittingCreateUser}
+                        className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-extrabold uppercase tracking-wider py-2 px-4 rounded-xl cursor-pointer transition h-[36px] flex items-center justify-center gap-1 whitespace-nowrap"
+                      >
+                        {isSubmittingCreateUser ? "Creating..." : "Create Account"}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+
+                {createUserStatus && (
+                  <div className={`p-3 rounded-xl text-xs font-semibold ${createUserStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
+                    {createUserStatus.message}
                   </div>
                 )}
               </div>
@@ -1610,6 +1778,16 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                               </button>
                               <button
                                 onClick={() => {
+                                  setResettingUser(u);
+                                  setResetNewPassword("");
+                                  setResetPasswordStatus(null);
+                                }}
+                                className="text-amber-400 hover:text-amber-300 font-extrabold text-[10px] uppercase tracking-wider cursor-pointer whitespace-nowrap"
+                              >
+                                Reset Pass
+                              </button>
+                              <button
+                                onClick={() => {
                                   if (window.confirm(`Are you absolutely sure you want to delete user ${u?.fullName || "this user"} from the ledger?`)) {
                                     deleteUser(u.id);
                                   }
@@ -1626,6 +1804,71 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                   </table>
                 </div>
               </div>
+
+              {/* Administrative Password Reset Modal Dialog */}
+              {resettingUser && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-white">Reset Gateway Password</h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Specify a secure, custom password override for this corporate agent account.</p>
+                      </div>
+                      <button
+                        onClick={() => setResettingUser(null)}
+                        className="text-slate-500 hover:text-slate-300 font-extrabold text-xs uppercase tracking-widest"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="bg-slate-950 p-3 rounded-xl border border-slate-850 space-y-1">
+                      <div className="text-[10px] font-extrabold uppercase text-slate-500">Agent Account</div>
+                      <div className="text-xs font-bold text-white">{resettingUser.fullName}</div>
+                      <div className="text-[10px] font-mono text-slate-400">{resettingUser.email}</div>
+                    </div>
+
+                    <form onSubmit={handleAdminResetPasswordSubmit} className="space-y-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">New Password</label>
+                        <input
+                          type="text"
+                          placeholder="Enter strong, secure password"
+                          value={resetNewPassword}
+                          onChange={(e) => setResetNewPassword(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                          required
+                          minLength={4}
+                        />
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setResettingUser(null)}
+                          className="flex-1 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-400 text-xs font-extrabold uppercase tracking-wider py-2.5 rounded-xl transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmittingReset}
+                          className="flex-1 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-extrabold uppercase tracking-wider py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center"
+                        >
+                          {isSubmittingReset ? "Updating..." : "Save Password"}
+                        </button>
+                      </div>
+                    </form>
+
+                    {resetPasswordStatus && (
+                      <div className={`p-3 rounded-xl text-xs font-semibold ${resetPasswordStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
+                        {resetPasswordStatus.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
             </div>
           )}
 

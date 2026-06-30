@@ -76,6 +76,7 @@ export interface User {
   walletAccountName?: string;
   walletAccounts?: Array<{ bankName: string; accountNumber: string; bankCode: string }>;
   isAdmin?: boolean;
+  customPassword?: string;
 }
 
 export interface FAQItem {

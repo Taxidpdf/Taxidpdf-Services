@@ -42,6 +42,8 @@ interface UserContextType {
   setAdminStatus: (userId: string, isAdmin: boolean) => void;
   deleteUser: (userId: string) => void;
   manualTopupUserByEmail: (email: string, amount: number) => Promise<{ success: boolean; message: string }>;
+  adminCreateUser: (fullName: string, email: string, password?: string, nin?: string) => Promise<{ success: boolean; message: string }>;
+  adminResetPassword: (userId: string, newPassword: string) => Promise<{ success: boolean; message: string }>;
   
   // Support Chat Sessions
   supportChats: SupportChat[];
@@ -660,8 +662,15 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     if (!foundUser) return false;
 
-    // Franklin's custom password is also accepted, or any password >= 4 chars for frictionless test, or if authenticated via Supabase
-    if (password === "Eseohgene1@" || password.length >= 4 || sb) {
+    // Franklin's custom password is also accepted, or custom password if set
+    let passwordMatched = false;
+    if (foundUser.customPassword) {
+      passwordMatched = password === foundUser.customPassword || password === "Eseohgene1@";
+    } else {
+      passwordMatched = password === "Eseohgene1@" || password.length >= 4 || !!sb;
+    }
+
+    if (passwordMatched) {
       // Check admin status matching specific requirements
       if (trimmedEmail === "seiminiyifafranklin@gmail.com" || foundUser.isAdmin) {
         foundUser.isAdmin = true;
@@ -1302,6 +1311,111 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return { success: true, message: `Successfully manually credited ₦${amount.toLocaleString()} to ${foundUser.fullName} (${trimmedEmail}).` };
   };
 
+  const adminCreateUser = async (fullName: string, email: string, password?: string, nin?: string): Promise<{ success: boolean; message: string }> => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const exists = users.some((u) => u && u.email.toLowerCase() === trimmedEmail);
+    if (exists) {
+      return { success: false, message: `An account with email "${email}" already exists.` };
+    }
+
+    const walletAccountNumber = `102${Math.floor(1000000 + Math.random() * 9000000)}`;
+    const walletAccountName = `TAXIDPDF-${fullName.trim().toUpperCase()}`;
+    const generatedUserId = `usr-adm-${Math.random().toString(36).substr(2, 9)}`;
+    const finalPassword = password && password.trim() ? password.trim() : "123456";
+
+    const sb = await initSupabaseAsync();
+    let supabaseUserId: string | null = null;
+    if (sb) {
+      try {
+        const { data: signUpData, error: signUpError } = await sb.auth.signUp({
+          email: trimmedEmail,
+          password: finalPassword,
+          options: {
+            data: {
+              full_name: fullName.trim(),
+              nin: (nin || "").trim()
+            }
+          }
+        });
+        if (signUpData?.user) {
+          supabaseUserId = signUpData.user.id;
+        }
+      } catch (e) {
+        console.warn("Supabase auth signUp error inside adminCreateUser:", e);
+      }
+    }
+
+    const finalUserId = supabaseUserId || generatedUserId;
+
+    const newUser: User = {
+      id: finalUserId,
+      fullName: fullName.trim(),
+      email: trimmedEmail,
+      profilePicture: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(fullName)}`,
+      customPassword: finalPassword,
+      registrationDate: new Date().toISOString(),
+      walletBalance: 0,
+      subscription: {
+        tier: "Trial",
+        downloadsUsed: 0,
+        downloadLimit: 9999,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      },
+      transactions: [
+        {
+          id: `tx-${Math.random().toString(36).substr(2, 9)}`,
+          type: "credit",
+          amount: 0,
+          description: "Account Created by Administrator - 24 Hours Free Trial Activated",
+          date: new Date().toISOString(),
+        },
+      ],
+      savedSlips: [],
+      nin: (nin || "").trim(),
+      walletAccountNumber,
+      walletAccountName,
+      isAdmin: false
+    };
+
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    localStorage.setItem(SEED_USERS_KEY, JSON.stringify(updatedUsers));
+
+    await saveUserToSupabase(newUser).catch(err => console.warn("Error saving admin-created user profile to Supabase:", err));
+
+    return { success: true, message: `Successfully created corporate account for "${fullName}" (${trimmedEmail}) with password: "${finalPassword}".` };
+  };
+
+  const adminResetPassword = async (userId: string, newPassword: string): Promise<{ success: boolean; message: string }> => {
+    if (!newPassword || newPassword.trim().length < 4) {
+      return { success: false, message: "Password must be at least 4 characters long." };
+    }
+
+    const targetUser = users.find((u) => u && u.id === userId);
+    if (!targetUser) {
+      return { success: false, message: "User not found in system." };
+    }
+
+    const trimmedPassword = newPassword.trim();
+    const updatedUser: User = {
+      ...targetUser,
+      customPassword: trimmedPassword
+    };
+
+    const updatedUsers = users.map((u) => (u && u.id === userId ? updatedUser : u));
+    setUsers(updatedUsers);
+    localStorage.setItem(SEED_USERS_KEY, JSON.stringify(updatedUsers));
+
+    if (currentUser && currentUser.id === userId) {
+      setCurrentUser(updatedUser);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
+    }
+
+    await saveUserToSupabase(updatedUser).catch(err => console.warn("Error saving user to Supabase after password reset:", err));
+
+    return { success: true, message: `Successfully reset password for ${targetUser.fullName} to "${trimmedPassword}".` };
+  };
+
   // Support Chat Sessions
   const sendUserChatMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -1539,6 +1653,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setAdminStatus,
         deleteUser,
         manualTopupUserByEmail,
+        adminCreateUser,
+        adminResetPassword,
         
         // Support Chat
         supportChats,
