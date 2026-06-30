@@ -770,13 +770,13 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                           </tr>
                           <tr>
                             <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>RC:</td>
-                            <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                            <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
                               {taxpayerData.cacNumber}
                             </td>
                           </tr>
                           <tr>
                             <td style={{ width: "35%", fontSize: "16px", fontWeight: "800", color: "#030712", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px" }}>Tax ID:</td>
-                            <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", fontFamily: "monospace", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
+                            <td style={{ width: "65%", fontSize: "16px", fontWeight: "700", color: "#1e293b", textTransform: "uppercase", verticalAlign: "top", paddingBottom: "24px", wordBreak: "break-word" }}>
                               {taxpayerData.tin}
                             </td>
                           </tr>
@@ -831,7 +831,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
                         <li style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                           <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-start", gap: "10px", fontSize: "15px", fontWeight: "600", color: "#1a3a54" }}>
                             <span style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#1a3a54", marginTop: "6px", flexShrink: 0, userSelect: "none" }} />
-                            <span>Your Tax ID is <strong style={{ fontWeight: "800", color: "#0f172a", fontFamily: "monospace", fontSize: "16px", marginLeft: "4px" }}>{taxpayerData.tin}</strong></span>
+                            <span>Your Tax ID is <strong style={{ fontWeight: "800", color: "#0f172a", fontSize: "16px", marginLeft: "4px" }}>{taxpayerData.tin}</strong></span>
                           </div>
                           
                           {/* Interactive Copy ID trigger */}
