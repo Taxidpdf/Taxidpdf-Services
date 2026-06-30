@@ -156,7 +156,98 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
     if (!certificateRef.current) return;
     setDownloading(true);
 
+    // Stash original descriptors/functions to restore in finally block
+    const originalCssRulesDescriptor = Object.getOwnPropertyDescriptor(CSSStyleSheet.prototype, "cssRules");
+    const originalGetComputedStyle = window.getComputedStyle;
+
     try {
+      // 1. Temporary patch for CSSStyleSheet.prototype.cssRules on the main window with fast O(1) caching
+      Object.defineProperty(CSSStyleSheet.prototype, "cssRules", {
+        get() {
+          try {
+            const rules = originalCssRulesDescriptor && originalCssRulesDescriptor.get
+              ? originalCssRulesDescriptor.get.call(this)
+              : [];
+            if (!rules) return rules;
+
+            // Instantly bypass sheets that don't have oklch to maintain maximum speed
+            let hasOklch = false;
+            if (this.ownerNode && this.ownerNode.textContent) {
+              hasOklch = this.ownerNode.textContent.includes("oklch");
+            } else if (this.href) {
+              hasOklch = this.href.includes(window.location.origin) || !this.href.startsWith("http");
+            }
+
+            if (!hasOklch) {
+              return rules;
+            }
+
+            if ((this as any).__cachedFilteredRules) {
+              return (this as any).__cachedFilteredRules;
+            }
+
+            const filtered: CSSRule[] = [];
+            for (let i = 0; i < rules.length; i++) {
+              const rule = rules[i];
+              if (rule && rule.cssText && rule.cssText.includes("oklch")) {
+                continue; // Skip rules with oklch to prevent html2canvas parsing crash
+              }
+              filtered.push(rule);
+            }
+
+            const proxy = new Proxy(rules, {
+              get(target, prop) {
+                if (prop === "length") {
+                  return filtered.length;
+                }
+                if (typeof prop === "string" && !isNaN(Number(prop))) {
+                  return filtered[Number(prop)];
+                }
+                if (prop === "item") {
+                  return (index: number) => filtered[index];
+                }
+                const val = (target as any)[prop];
+                return typeof val === "function" ? val.bind(target) : val;
+              },
+            });
+            (this as any).__cachedFilteredRules = proxy;
+            return proxy;
+          } catch (e) {
+            return [];
+          }
+        },
+        configurable: true,
+      });
+
+      // 2. Temporary patch for window.getComputedStyle on the main window
+      window.getComputedStyle = function (el, pseudoElt) {
+        const styleObj = originalGetComputedStyle.call(window, el, pseudoElt);
+        if (el && styleObj && certificateRef.current && certificateRef.current.contains(el)) {
+          return new Proxy(styleObj, {
+            get(target, prop) {
+              const val = target[prop as any];
+              if (typeof val === "function") {
+                if (prop === "getPropertyValue") {
+                  return function (name: string) {
+                    const originalVal = target.getPropertyValue(name);
+                    if (originalVal && typeof originalVal === "string" && originalVal.includes("oklch")) {
+                      return convertOklchToRgb(originalVal);
+                    }
+                    return originalVal;
+                  };
+                }
+                return val.bind(target);
+              }
+              if (val && typeof val === "string" && val.includes("oklch")) {
+                return convertOklchToRgb(val);
+              }
+              return val;
+            },
+          });
+        }
+        return styleObj;
+      };
+
       const element = certificateRef.current;
       
       // Highly optimized single-pass render with CORS off and stripped cloned stylesheets
@@ -234,6 +325,11 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
       console.error("PDF generation failed:", err);
       alert(`An error occurred while compiling your PDF: ${err instanceof Error ? err.message : String(err)}. Please try again or use the print option.`);
     } finally {
+      // Restore original cssRules descriptor and getComputedStyle function safely
+      if (originalCssRulesDescriptor) {
+        Object.defineProperty(CSSStyleSheet.prototype, "cssRules", originalCssRulesDescriptor);
+      }
+      window.getComputedStyle = originalGetComputedStyle;
       setDownloading(false);
     }
   };
