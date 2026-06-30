@@ -162,7 +162,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || "3000";
 
 app.use(express.json({
   verify: (req: any, res, buf) => {
@@ -934,9 +934,18 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`[Server] running on http://0.0.0.0:${PORT} in ${process.env.NODE_ENV || "development"} mode`);
-  });
+  if (typeof PORT === "string" && isNaN(Number(PORT))) {
+    // It's a cPanel Phusion Passenger Unix Domain Socket
+    app.listen(PORT, () => {
+      console.log(`[Server] running on Unix socket: ${PORT} in ${process.env.NODE_ENV || "development"} mode`);
+    });
+  } else {
+    // It's a standard numeric port
+    const numericPort = typeof PORT === "number" ? PORT : parseInt(PORT as string, 10);
+    app.listen(numericPort, "0.0.0.0", () => {
+      console.log(`[Server] running on http://0.0.0.0:${numericPort} in ${process.env.NODE_ENV || "development"} mode`);
+    });
+  }
 }
 
 startServer();

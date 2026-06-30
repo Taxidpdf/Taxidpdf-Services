@@ -18,6 +18,7 @@
 
     # 3. React SPA Fallback Routing
     # This ensures that deep links like /dashboard or /login are handled by React index.html
+    RewriteCond %{REQUEST_URI} !^/api/
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule . /index.html [L]
