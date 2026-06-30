@@ -702,6 +702,21 @@ app.get("/api/monnify/config", (req, res) => {
   }
 });
 
+// Endpoint 2.6: Get Supabase Configuration dynamically at runtime to support environments like cPanel
+app.get("/api/supabase-config", (req, res) => {
+  try {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "";
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "";
+    return res.json({
+      success: true,
+      supabaseUrl,
+      supabaseAnonKey
+    });
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Endpoint 3: Reserve Dedicated Virtual Account dynamically (Protected and Rate Limited)
 app.post("/api/monnify/reserve-account", paymentLimiter, async (req, res) => {
   try {

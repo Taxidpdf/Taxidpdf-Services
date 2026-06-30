@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { User, SubscriptionTier, SavedSlip, Transaction, PortalSettings, PendingTopup, SupportChat, ChatMessage } from "../types";
-import { getSupabase } from "../lib/supabase";
+import { getSupabase, initSupabaseAsync } from "../lib/supabase";
 import {
   fetchUsersFromSupabase,
   saveUserToSupabase,
@@ -412,7 +412,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
     // Initial Supabase synchronization (Background fetch and merge)
     const initSupabase = async () => {
-      const sb = getSupabase();
+      const sb = await initSupabaseAsync();
       if (!sb) return;
 
       try {
@@ -616,7 +616,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const trimmedEmail = email.trim().toLowerCase();
-    const sb = getSupabase();
+    const sb = await initSupabaseAsync();
     let foundUser: User | null = null;
 
     if (sb) {
@@ -677,7 +677,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const exists = users.some((u) => u?.email && u.email.toLowerCase() === trimmedEmail);
     if (exists) return false;
 
-    const sb = getSupabase();
+    const sb = await initSupabaseAsync();
     let supabaseUserId: string | null = null;
 
     if (sb) {
