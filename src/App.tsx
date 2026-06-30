@@ -135,11 +135,22 @@ export default function App() {
             })
           });
 
+          const contentType = response.headers.get("content-type") || "";
+          if (contentType.includes("text/html")) {
+            throw new Error("The server returned HTML instead of JSON. This suggests your Node/Express backend is either not running, or there is a routing/reverse-proxy issue on your hosting provider.");
+          }
+
           if (!response.ok) {
             throw new Error("Failed to contact Paystack checkout server.");
           }
 
-          const resData = await response.json();
+          let resData;
+          try {
+            resData = await response.json();
+          } catch (jsonErr) {
+            throw new Error("The server response is not valid JSON. This suggests your Node/Express backend is either not running, or there is a routing/reverse-proxy/domain configuration issue.");
+          }
+
           if (!resData.success) {
             throw new Error(resData.error || "Failed to initialize Paystack checkout.");
           }

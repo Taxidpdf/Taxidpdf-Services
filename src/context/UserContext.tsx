@@ -95,8 +95,8 @@ const DEFAULT_SETTINGS: PortalSettings = {
       answer: "Absolutely. Once a slip has been paid for (either at the ₦100 trial promo or the ₦750 on-demand rate), it is saved securely to your Dashboard Logs. You can re-download, view, or print it at any time for 100% free with no extra fees."
     },
     {
-      question: "How does the wallet bank transfer verification work?",
-      answer: "We assign a unique Moniepoint gateway wallet account name to your organization. When you make a standard bank transfer of the ₦100 (trial first slip) or ₦750 retrieval fee to this account, our direct API ledger validates the inbound transaction in under 5 seconds, triggering your official slip download instantly."
+      question: "How does the wallet funding verification work?",
+      answer: "We utilize Paystack to process card, bank transfer, USSD, or mobile banking payments. When you complete a checkout transaction, our system validates the payment instantly, auto-crediting your wallet balance in under 5 seconds."
     },
     {
       question: "Does this portal save my sensitive information (BVN or NIN)?",
@@ -130,7 +130,7 @@ const DEFAULT_SETTINGS: PortalSettings = {
     },
     {
       title: "Wallet On-Demand Settlement",
-      desc: "After your 24-hour trial, never get locked into expensive monthly sub fees. Pay only ₦750 per download using bank transfers to your assigned Moniepoint gateway account."
+      desc: "After your 24-hour trial, never get locked into expensive monthly sub fees. Pay only ₦750 per download via easy, secure Paystack checkout."
     },
     {
       title: "Eternal Storage & Re-downloads",

@@ -851,7 +851,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <DollarSign className="w-4 h-4 text-emerald-400" />
                   </div>
                   <h3 className="text-2xl font-black text-emerald-400">₦{totalRevenue.toLocaleString()}</h3>
-                  <p className="text-[10px] text-slate-500 font-semibold">Cumulative Moniepoint inflows</p>
+                  <p className="text-[10px] text-slate-500 font-semibold">Cumulative Paystack inflows</p>
                 </div>
               </div>
 

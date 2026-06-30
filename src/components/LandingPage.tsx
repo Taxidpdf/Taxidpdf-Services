@@ -673,7 +673,7 @@ export default function LandingPage() {
                         className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold tracking-widest text-slate-800 focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all"
                       />
                       <p className="mt-1 text-[10px] text-emerald-600 font-bold tracking-wide uppercase flex items-center gap-1">
-                        <span>⚡ Automatically binds Moniepoint wallet on completion</span>
+                        <span>⚡ Automatically creates a secure gateway wallet on completion</span>
                       </p>
                     </div>
                   </div>
@@ -923,7 +923,7 @@ export default function LandingPage() {
                 </h3>
               </div>
               <p className="text-xs text-emerald-100/70 leading-relaxed">
-                Applies automatically after trial. No monthly renewals. Transfer exactly ₦750 to your Moniepoint wallet on-demand to download paid slips.
+                Applies automatically after trial. No monthly renewals. Top up exactly ₦750 to your secure wallet on-demand via Paystack to download paid slips.
               </p>
               <div className="h-[1px] bg-emerald-800/50" />
               <ul className="space-y-2.5 text-xs text-emerald-100/80">
@@ -1156,7 +1156,7 @@ export default function LandingPage() {
                     </p>
                     <ul className="list-disc pl-8 text-slate-400 space-y-1">
                       <li><strong>Level 1 Support:</strong> Standard account verification, registration questions, or CAC search tips.</li>
-                      <li><strong>Level 2 Support:</strong> Urgent wallet top-ups or bank transfer verification issues requiring direct manual routing audit.</li>
+                      <li><strong>Level 2 Support:</strong> Urgent wallet top-ups or Paystack transaction verification issues requiring direct manual routing audit.</li>
                     </ul>
                   </div>
 

@@ -49,6 +49,13 @@ const paymentLimiter = rateLimit({
 
 // HTTP to HTTPS and Domain Canonicalization Middleware
 app.use((req, res, next) => {
+  // Completely skip HTTP-to-HTTPS & Canonicalization redirection for any API endpoints to prevent
+  // reverse proxy header-forwarding mismatches (which converts POST API requests to GET redirects,
+  // causing unexpected HTML/index.html responses for client fetches!)
+  if (req.path.startsWith("/api/")) {
+    return next();
+  }
+
   const hostHeader = req.get("host") || "";
   const hostNameOnly = hostHeader.split(":")[0].toLowerCase();
   

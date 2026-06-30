@@ -92,11 +92,22 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
         })
       });
 
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("text/html")) {
+        throw new Error("The server returned HTML instead of JSON. This suggests your Node/Express backend is either not running, or there is a routing/reverse-proxy issue on your hosting provider.");
+      }
+
       if (!response.ok) {
         throw new Error("Failed to contact Paystack checkout server.");
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        throw new Error("The server response is not valid JSON. This suggests your Node/Express backend is either not running, or there is a routing/reverse-proxy/domain configuration issue.");
+      }
+
       if (!data.success) {
         throw new Error(data.error || "Failed to initialize Paystack checkout.");
       }

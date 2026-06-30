@@ -205,11 +205,22 @@ export default function WalletAndSubs() {
         })
       });
 
+      const contentType = response.headers.get("content-type") || "";
+      if (contentType.includes("text/html")) {
+        throw new Error("The server returned HTML instead of JSON. This suggests your Node/Express backend is either not running, or there is a routing/reverse-proxy issue on your hosting provider.");
+      }
+
       if (!response.ok) {
         throw new Error("Failed to contact Paystack checkout initialization server.");
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        throw new Error("The server response is not valid JSON. This suggests your Node/Express backend is either not running, or there is a routing/reverse-proxy/domain configuration issue.");
+      }
+
       if (!data.success) {
         throw new Error(data.error || "Failed to initialize Paystack checkout.");
       }
@@ -497,7 +508,7 @@ export default function WalletAndSubs() {
           <div>
             <h3 className="text-base font-extrabold text-slate-800">Report Uncredited Payment</h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Did a network glitch prevent your transfer from showing in your wallet? Report it below with transaction details. Our Admin Support Team will review and approve it manually!
+              Did a temporary network drop prevent your Paystack deposit from reflecting in your wallet? Report it below with your transaction reference. Our Admin Support Team will verify the reference and credit you manually!
             </p>
           </div>
         </div>
@@ -519,7 +530,7 @@ export default function WalletAndSubs() {
         <form onSubmit={handleReportPayment} className="grid grid-cols-1 md:grid-cols-12 gap-4 mt-5">
           <div className="md:col-span-4">
             <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1.5">
-              Amount Transferred (₦)
+              Amount Paid (₦)
             </label>
             <input
               type="number"

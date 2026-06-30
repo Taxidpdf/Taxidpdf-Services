@@ -164,7 +164,7 @@ export default function Footer() {
                     </p>
                     <p className="font-semibold text-slate-800">C. Financial Details:</p>
                     <p>
-                      All top-up payments are processed through integrated secure banking transfers (using Moniepoint/Providus). We do not collect or store your payment card numbers or personal bank log-ins on our servers.
+                      All top-up payments are processed through our integrated secure Paystack gateway. We do not collect or store your payment card numbers or personal bank log-ins on our servers.
                     </p>
                   </div>
 
