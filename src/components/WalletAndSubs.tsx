@@ -41,6 +41,8 @@ export default function WalletAndSubs() {
   const [cardholderName, setCardholderName] = useState("");
   const [processingPayment, setProcessingPayment] = useState(false);
   const [isMonnifyTestMode, setIsMonnifyTestMode] = useState<boolean | null>(null);
+  const [isPaystackTestMode, setIsPaystackTestMode] = useState<boolean | null>(null);
+  const [selectedGateway, setSelectedGateway] = useState<"paystack" | "monnify" | "sandbox">("paystack");
 
   useEffect(() => {
     fetch("/api/monnify/config")
@@ -51,6 +53,15 @@ export default function WalletAndSubs() {
         }
       })
       .catch(err => console.warn("Failed to fetch Monnify configuration mode:", err));
+
+    fetch("/api/paystack/config")
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setIsPaystackTestMode(data.isTestMode);
+        }
+      })
+      .catch(err => console.warn("Failed to fetch Paystack configuration mode:", err));
   }, []);
 
   useEffect(() => {
@@ -284,10 +295,74 @@ export default function WalletAndSubs() {
     }
   };
 
+  const payWithPaystack = async (amount: number) => {
+    setErrorMsg("");
+    setSuccessMsg("");
+    setProcessingPayment(true);
+
+    try {
+      const response = await fetch("/api/paystack/init-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: amount,
+          customerName: currentUser.fullName,
+          customerEmail: currentUser.email,
+          paymentDescription: "Tax ID Portal Wallet Funding"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to contact Paystack checkout initialization server.");
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to initialize Paystack checkout.");
+      }
+
+      if (data.checkoutUrl) {
+        // Redirect to Paystack's secure hosted payment page (recommended standard, works inside iframe seamlessly)
+        setProcessingPayment(false);
+        setIsCheckoutOpen(false);
+        window.location.href = data.checkoutUrl;
+      } else {
+        // Mock Sandbox simulation overlay if credentials are not filled yet on the server
+        setTimeout(() => {
+          fundWallet(amount, `Instant Deposit via Paystack (Card/Online)`);
+          setProcessingPayment(false);
+          setIsCheckoutOpen(false);
+          setSuccessMsg(`Sandbox Paystack Payment of ₦${amount.toLocaleString()} successful! Credited your wallet balance.`);
+          setFundingPurpose("custom");
+          setFundingAmount("5000");
+        }, 1800);
+      }
+    } catch (err: any) {
+      setProcessingPayment(false);
+      setErrorMsg(`Paystack checkout error: ${err.message}`);
+    }
+  };
+
   const handleProcessPayment = (e: React.FormEvent) => {
     e.preventDefault();
     const numAmount = parseFloat(fundingAmount);
-    payWithMonnify(numAmount);
+    
+    if (selectedGateway === "paystack") {
+      payWithPaystack(numAmount);
+    } else if (selectedGateway === "monnify") {
+      payWithMonnify(numAmount);
+    } else {
+      // Direct local sandbox simulation
+      setProcessingPayment(true);
+      setTimeout(() => {
+        fundWallet(numAmount, `Instant Sandbox Simulation Credit`);
+        setProcessingPayment(false);
+        setIsCheckoutOpen(false);
+        setSuccessMsg(`Instant Local Simulation Credit of ₦${numAmount.toLocaleString()} completed successfully!`);
+        setFundingPurpose("custom");
+        setFundingAmount("5000");
+      }, 1500);
+    }
   };
 
   const handlePurchaseSub = (tier: SubscriptionTier, rawPrice: number) => {
@@ -937,87 +1012,178 @@ export default function WalletAndSubs() {
               </div>
             ) : (
               <form onSubmit={handleProcessPayment} className="space-y-4">
-                <div>
-                  <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
-                    Cardholder Name
+                {/* Gateway / Provider Selector Segment */}
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1">
+                    Payment Gateway / Method
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                      <UserIcon className="w-4 h-4" />
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={cardholderName}
-                      onChange={(e) => setCardholderName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
-                    Card Number
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                      <CreditCard className="w-4 h-4" />
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      placeholder="5399 2145 7859 2364"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
-                      Expiry Date
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                        <Calendar className="w-4 h-4" />
+                  <div className="grid grid-cols-3 bg-slate-100 p-1 rounded-2xl gap-1 border border-slate-200/50">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGateway("paystack")}
+                      className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                        selectedGateway === "paystack"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/40"
+                      }`}
+                    >
+                      <span>Paystack</span>
+                      <span className="text-[7px] opacity-80 font-bold leading-none">
+                        {isPaystackTestMode === false ? "Live" : "Sandbox"}
                       </span>
-                      <input
-                        type="text"
-                        required
-                        placeholder="MM/YY"
-                        value={expiryDate}
-                        onChange={(e) => setExpiryDate(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGateway("monnify")}
+                      className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                        selectedGateway === "monnify"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/40"
+                      }`}
+                    >
+                      <span>Monnify</span>
+                      <span className="text-[7px] opacity-80 font-bold leading-none">
+                        {isMonnifyTestMode === false ? "Live" : "Sandbox"}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedGateway("sandbox");
+                        setCardholderName(currentUser?.fullName || "Customer");
+                        setCardNumber("5399 2145 7859 2364");
+                        setExpiryDate("12/29");
+                        setCvv("384");
+                      }}
+                      className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer ${
+                        selectedGateway === "sandbox"
+                          ? "bg-amber-500 text-white shadow-sm"
+                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/40"
+                      }`}
+                    >
+                      <span>Mock Card</span>
+                      <span className="text-[7px] opacity-80 font-bold leading-none">Local Test</span>
+                    </button>
+                  </div>
+                </div>
+
+                {selectedGateway === "paystack" ? (
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
+                      Paystack Secure Online Checkout
+                    </h4>
+                    <p className="text-[11px] text-slate-500 leading-normal font-medium">
+                      You will be securely redirected to Paystack to complete your deposit. Paystack supports <strong>Card, Bank Transfer, USSD, and Bank App payments</strong> instantly.
+                    </p>
+                    <div className="bg-slate-200/40 p-2 rounded-xl text-[10px] text-slate-500 font-bold flex justify-between items-center">
+                      <span>Verification Status</span>
+                      <span className="text-emerald-700 uppercase tracking-wide">Instant Auto-Credit</span>
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
-                      CVV
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
-                        <Hash className="w-4 h-4" />
-                      </span>
-                      <input
-                        type="password"
-                        required
-                        placeholder="123"
-                        maxLength={3}
-                        value={cvv}
-                        onChange={(e) => setCvv(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                      />
+                ) : selectedGateway === "monnify" ? (
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                      Monnify Online Checkout
+                    </h4>
+                    <p className="text-[11px] text-slate-500 leading-normal font-medium">
+                      You will be securely redirected to Monnify to complete your transaction. Supports <strong>Card, USSD, and Direct Transfer</strong> with instant confirmation.
+                    </p>
+                    <div className="bg-slate-200/40 p-2 rounded-xl text-[10px] text-slate-500 font-bold flex justify-between items-center">
+                      <span>Verification Status</span>
+                      <span className="text-emerald-700 uppercase tracking-wide">Instant Auto-Credit</span>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
+                        Cardholder Name
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                          <UserIcon className="w-4 h-4" />
+                         </span>
+                        <input
+                          type="text"
+                          required
+                          value={cardholderName}
+                          onChange={(e) => setCardholderName(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
+                        Card Number
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                          <CreditCard className="w-4 h-4" />
+                        </span>
+                        <input
+                          type="text"
+                          required
+                          placeholder="5399 2145 7859 2364"
+                          value={cardNumber}
+                          onChange={(e) => setCardNumber(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
+                          Expiry Date
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <Calendar className="w-4 h-4" />
+                          </span>
+                          <input
+                            type="text"
+                            required
+                            placeholder="MM/YY"
+                            value={expiryDate}
+                            onChange={(e) => setExpiryDate(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
+                          CVV
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <Hash className="w-4 h-4" />
+                          </span>
+                          <input
+                            type="password"
+                            required
+                            placeholder="123"
+                            maxLength={3}
+                            value={cvv}
+                            onChange={(e) => setCvv(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex items-center gap-2 text-[10px] text-slate-400 leading-none">
                   <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span>Simulated Secure TLS Card Processing. No real charges are made.</span>
+                  <span>
+                    {selectedGateway === "sandbox"
+                      ? "Simulated Secure TLS Card Processing. No real charges are made."
+                      : `Securely routing checkout via standard encrypted ${selectedGateway === "paystack" ? "Paystack" : "Monnify"} APIs.`}
+                  </span>
                 </div>
 
                 <button
@@ -1025,7 +1191,13 @@ export default function WalletAndSubs() {
                   disabled={processingPayment}
                   className="w-full mt-4 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-100 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                 >
-                  <span>{processingPayment ? "AUTHORIZING WITH BANK..." : `COMPLETE PAYMENT OF ₦${parseFloat(fundingAmount).toLocaleString()}`}</span>
+                  <span>
+                    {processingPayment
+                      ? "REDIRECTING SECURELY..."
+                      : selectedGateway === "sandbox"
+                      ? `COMPLETE SIMULATED DEPOSIT`
+                      : `PROCEED TO SECURE CHECKOUT (₦${parseFloat(fundingAmount).toLocaleString()})`}
+                  </span>
                 </button>
               </form>
             )}
