@@ -41,8 +41,48 @@ export default function ProfileSettings() {
       const reader = new FileReader();
       reader.onloadend = () => {
         if (typeof reader.result === "string") {
-          setSelectedAvatar(reader.result);
-          setSuccess(false);
+          const base64Str = reader.result;
+          
+          // Downscale and compress image to keep base64 tiny and fast to sync in database text column
+          const img = new Image();
+          img.src = base64Str;
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const maxWidth = 160;
+            const maxHeight = 160;
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+              if (width > maxWidth) {
+                height = Math.round((height * maxWidth) / width);
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width = Math.round((width * maxHeight) / height);
+                height = maxHeight;
+              }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            if (ctx) {
+              ctx.drawImage(img, 0, 0, width, height);
+              // Store as high-performance JPEG at 70% quality (usually <10KB)
+              const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+              setSelectedAvatar(compressedBase64);
+              setSuccess(false);
+            } else {
+              setSelectedAvatar(base64Str);
+              setSuccess(false);
+            }
+          };
+          img.onerror = () => {
+            setSelectedAvatar(base64Str);
+            setSuccess(false);
+          };
         }
       };
       reader.readAsDataURL(file);
