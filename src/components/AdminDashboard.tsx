@@ -61,6 +61,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   const [isSubmittingManual, setIsSubmittingManual] = useState(false);
 
   // Administrative Create User form state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createUserFullName, setCreateUserFullName] = useState("");
   const [createUserEmail, setCreateUserEmail] = useState("");
   const [createUserPassword, setCreateUserPassword] = useState("");
@@ -129,6 +130,10 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
         setCreateUserEmail("");
         setCreateUserPassword("");
         setCreateUserNIN("");
+        setTimeout(() => {
+          setIsCreateModalOpen(false);
+          setCreateUserStatus(null);
+        }, 1500);
       }
     } catch (err: any) {
       setCreateUserStatus({ success: false, message: err?.message || "An error occurred during account creation." });
@@ -1644,83 +1649,22 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                 )}
               </div>
 
-              {/* Administrative Create User Account Panel */}
-              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div>
-                  <h3 className="text-sm font-extrabold text-white">Create New Corporate Agent Account</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Manually register a corporate agent. Once created, they can immediately log in using their credentials.</p>
-                </div>
-
-                <form onSubmit={handleAdminCreateUserSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Full Name / Corporate Agent</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Franklin Services Ltd"
-                      value={createUserFullName}
-                      onChange={(e) => setCreateUserFullName(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-600 outline-none transition"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Email Address</label>
-                    <input
-                      type="email"
-                      placeholder="e.g. franklin@example.com"
-                      value={createUserEmail}
-                      onChange={(e) => setCreateUserEmail(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Default Password (Optional)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. 123456"
-                      value={createUserPassword}
-                      onChange={(e) => setCreateUserPassword(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5 flex flex-col justify-end">
-                    <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">NIN Number (Optional)</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="e.g. 12345678901"
-                        value={createUserNIN}
-                        onChange={(e) => setCreateUserNIN(e.target.value)}
-                        className="flex-1 bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2 text-xs font-mono text-white placeholder-slate-600 outline-none transition animate-fadeIn"
-                        maxLength={11}
-                      />
-                      <button
-                        type="submit"
-                        disabled={isSubmittingCreateUser}
-                        className="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-extrabold uppercase tracking-wider py-2 px-4 rounded-xl cursor-pointer transition h-[36px] flex items-center justify-center gap-1 whitespace-nowrap"
-                      >
-                        {isSubmittingCreateUser ? "Creating..." : "Create Account"}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-
-                {createUserStatus && (
-                  <div className={`p-3 rounded-xl text-xs font-semibold ${createUserStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
-                    {createUserStatus.message}
-                  </div>
-                )}
-              </div>
-
               {/* Registered Users Table */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-                <div>
-                  <h3 className="text-sm font-extrabold text-white">TaxID Registered User Ledger</h3>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Audit, promote, delete, or review active balances and credentials of corporate agents.</p>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-white">TaxID Registered User Ledger</h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">Audit, promote, delete, or review active balances and credentials of corporate agents.</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsCreateModalOpen(true);
+                      setCreateUserStatus(null);
+                    }}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase tracking-wider py-2.5 px-4 rounded-xl transition cursor-pointer flex items-center gap-2 self-start sm:self-center shrink-0 shadow-lg shadow-emerald-950/20"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" /> Register New Agent
+                  </button>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -1863,6 +1807,101 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     {resetPasswordStatus && (
                       <div className={`p-3 rounded-xl text-xs font-semibold ${resetPasswordStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
                         {resetPasswordStatus.message}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Administrative Create Corporate Agent Modal Dialog */}
+              {isCreateModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fadeIn">
+                  <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-sm font-extrabold text-white flex items-center gap-1.5">
+                          <UserPlus className="w-4 h-4 text-emerald-400" />
+                          Register New Agent
+                        </h3>
+                        <p className="text-[10px] text-slate-400 mt-0.5">Create a corporate gateway account. They can immediately log in.</p>
+                      </div>
+                      <button
+                        onClick={() => setIsCreateModalOpen(false)}
+                        className="text-slate-500 hover:text-slate-300 font-extrabold text-xs uppercase tracking-widest cursor-pointer transition"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <form onSubmit={handleAdminCreateUserSubmit} className="space-y-3.5">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Full Name / Corporate Agent</label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Franklin Services Ltd"
+                          value={createUserFullName}
+                          onChange={(e) => setCreateUserFullName(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-600 outline-none transition"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Email Address</label>
+                        <input
+                          type="email"
+                          placeholder="e.g. franklin@example.com"
+                          value={createUserEmail}
+                          onChange={(e) => setCreateUserEmail(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Default Password (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="Default is 123456"
+                          value={createUserPassword}
+                          onChange={(e) => setCreateUserPassword(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">NIN Number (Optional)</label>
+                        <input
+                          type="text"
+                          placeholder="11-digit National Identity Number"
+                          value={createUserNIN}
+                          onChange={(e) => setCreateUserNIN(e.target.value)}
+                          className="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl px-3 py-2.5 text-xs font-mono text-white placeholder-slate-600 outline-none transition"
+                          maxLength={11}
+                        />
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => setIsCreateModalOpen(false)}
+                          className="flex-1 bg-slate-950 hover:bg-slate-850 border border-slate-800 text-slate-400 text-xs font-extrabold uppercase tracking-wider py-2.5 rounded-xl transition cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          disabled={isSubmittingCreateUser}
+                          className="flex-1 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-extrabold uppercase tracking-wider py-2.5 rounded-xl transition cursor-pointer flex items-center justify-center"
+                        >
+                          {isSubmittingCreateUser ? "Creating..." : "Create Account"}
+                        </button>
+                      </div>
+                    </form>
+
+                    {createUserStatus && (
+                      <div className={`p-3 rounded-xl text-xs font-semibold ${createUserStatus.success ? "bg-emerald-950/40 text-emerald-400 border border-emerald-900/30" : "bg-red-950/40 text-red-400 border border-red-900/30"}`}>
+                        {createUserStatus.message}
                       </div>
                     )}
                   </div>
