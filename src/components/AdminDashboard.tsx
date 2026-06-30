@@ -467,7 +467,9 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
       id: `slip-sup-${Math.random().toString(36).substr(2, 9)}`,
       taxpayerName: genName.trim().toUpperCase(),
       tin: genTin.trim().toUpperCase(),
-      cacNumber: genCac.trim().toUpperCase() || "N/A",
+      cacNumber: genCac.trim()
+        ? (genCac.trim().toUpperCase().startsWith("RC") ? genCac.trim().toUpperCase() : `RC-${genCac.trim().toUpperCase()}`)
+        : "N/A",
       registeredAddress: genAddress.trim().toUpperCase() || "NOT PROVIDED",
       downloadedAt: new Date().toISOString()
     };
@@ -1966,9 +1968,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <input
                       type="text"
                       required
-                      placeholder="e.g. 1045738495-0001"
+                      placeholder="e.g. 2620615249771"
                       value={genTin}
-                      onChange={(e) => setGenTin(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 13);
+                        setGenTin(val);
+                      }}
+                      maxLength={13}
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                     />
                   </div>
@@ -1977,9 +1983,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
                     <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1">CAC Registration Number (Optional)</label>
                     <input
                       type="text"
-                      placeholder="e.g. RC-1938592"
+                      placeholder="e.g. 9634173"
                       value={genCac}
-                      onChange={(e) => setGenCac(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 7);
+                        setGenCac(val);
+                      }}
+                      maxLength={7}
                       className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold"
                     />
                   </div>

@@ -22,11 +22,15 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
   const validate = () => {
     const tempErrors: Record<string, string> = {};
     if (!companyName.trim()) tempErrors.companyName = "Company Name is required.";
-    if (!rcNumber.trim()) tempErrors.rcNumber = "RC Number is required.";
+    if (!rcNumber.trim()) {
+      tempErrors.rcNumber = "RC Number is required.";
+    } else if (rcNumber.trim().length !== 7) {
+      tempErrors.rcNumber = "RC Number must be exactly 7 digits.";
+    }
     if (!taxId.trim()) {
       tempErrors.taxId = "Tax ID is required.";
-    } else if (!/^[0-9-]{8,15}$/.test(taxId.trim())) {
-      tempErrors.taxId = "Please enter a valid 8 to 15 digit Tax ID.";
+    } else if (taxId.trim().length !== 13) {
+      tempErrors.taxId = "Tax ID (TIN) must be exactly 13 digits.";
     }
     if (!businessAddress.trim()) tempErrors.businessAddress = "Business Address is required.";
     if (!consented) tempErrors.consented = "You must provide consent to proceed.";
@@ -180,12 +184,14 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
           <input
             type="text"
             id="rc-number"
-            placeholder="e.g. RC-1234567"
+            placeholder="e.g. 9634173"
             value={rcNumber}
             onChange={(e) => {
-              setRcNumber(e.target.value);
+              const val = e.target.value.replace(/\D/g, "").slice(0, 7);
+              setRcNumber(val);
               if (errors.rcNumber) setErrors((prev) => ({ ...prev, rcNumber: "" }));
             }}
+            maxLength={7}
             disabled={loading}
             className={`w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all ${
               errors.rcNumber ? "border-red-300 bg-red-50/10 focus:ring-red-400" : "border-slate-200"
@@ -208,12 +214,14 @@ export default function SearchForm({ onSearchResult, loading, setLoading }: Sear
           <input
             type="text"
             id="tax-id"
-            placeholder="e.g. 23456789-0001"
+            placeholder="e.g. 2620615249771"
             value={taxId}
             onChange={(e) => {
-              setTaxId(e.target.value);
+              const val = e.target.value.replace(/\D/g, "").slice(0, 13);
+              setTaxId(val);
               if (errors.taxId) setErrors((prev) => ({ ...prev, taxId: "" }));
             }}
+            maxLength={13}
             disabled={loading}
             className={`w-full px-4 py-3 bg-slate-50 border rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:bg-white transition-all ${
               errors.taxId ? "border-red-300 bg-red-50/10 focus:ring-red-400" : "border-slate-200"
