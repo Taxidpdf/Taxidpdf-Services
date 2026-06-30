@@ -106,12 +106,10 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
       // Allow images from safe HTTP/HTTPS endpoints for taxpayer avatars and logo rendering
       imgSrc: ["'self'", "data:", "https:", "http:"],
-      // Allow connections to Supabase, Monnify, Google/Gemini APIs, and local development websockets
+      // Allow connections to Supabase, Google/Gemini APIs, and local development websockets
       connectSrc: [
         "'self'",
         "https://*.supabase.co",
-        "https://sandbox.monnify.com",
-        "https://api.monnify.com",
         "https://*.google.com",
         "https://*",
         "wss://*",
@@ -126,7 +124,7 @@ app.use(helmet({
         "https://*.github.dev",
         "https://*.gitpod.io"
       ],
-      frameSrc: ["'self'", "https://sandbox.monnify.com", "https://api.monnify.com"],
+      frameSrc: ["'self'"],
       objectSrc: ["'none'"],
     },
   },
@@ -514,192 +512,23 @@ Response (Keep it conversational, warm, and professional, under 5 sentences):
 });
 
 // =========================================================================
-// MONNIFY PAYMENT INTEGRATION HELPERS & ENDPOINTS
+// MONNIFY PAYMENT INTEGRATION HELPERS & ENDPOINTS (DEACTIVATED)
 // =========================================================================
 
-async function getMonnifyAccessToken(): Promise<string> {
-  const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
-  const apiKey = process.env.MONNIFY_API_KEY || "MK_TEST_MOCK_API_KEY";
-  const secretKey = process.env.MONNIFY_SECRET_KEY || "MK_TEST_MOCK_SECRET_KEY";
-
-  const authHeader = Buffer.from(`${apiKey}:${secretKey}`).toString("base64");
-
-  try {
-    const response = await fetch(`${baseUrl}/api/v1/auth/login`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Basic ${authHeader}`,
-        "Content-Type": "application/json"
-      }
-    });
-
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn("[Monnify Login Fallback] Failed Monnify API login, returning mock token for sandbox environment simulation.");
-      return "mock-access-token-123456";
-    }
-
-    const data: any = await response.json();
-    if (data.requestSuccessful && data.responseBody && data.responseBody.accessToken) {
-      return data.responseBody.accessToken;
-    }
-  } catch (err: any) {
-    console.warn("[Monnify Login Exception] Fallback to mock-token due to:", err.message);
-  }
-  return "mock-access-token-123456";
-}
-
-// Endpoint 1: Initialize Payment (Card / Web Checkout redirect fallback - Protected and Rate Limited)
-app.post("/api/monnify/init-payment", paymentLimiter, async (req, res) => {
-  try {
-    const { amount, customerName, customerEmail, paymentDescription, redirectUrl } = req.body;
-    
-    // Strict parameter validation
-    if (!amount || !customerName || !customerEmail) {
-      return res.status(400).json({ error: "Missing required parameters (amount, customerName, customerEmail)" });
-    }
-
-    const numAmount = Number(amount);
-    if (isNaN(numAmount) || numAmount <= 0) {
-      return res.status(400).json({ error: "Amount must be a positive number" });
-    }
-
-    if (typeof customerName !== "string" || typeof customerEmail !== "string") {
-      return res.status(400).json({ error: "Invalid parameter types. Strings required for name/email." });
-    }
-
-    const cleanName = customerName.trim().substring(0, 100);
-    const cleanEmail = customerEmail.trim().substring(0, 150);
-    const cleanDesc = typeof paymentDescription === "string" ? paymentDescription.trim().substring(0, 200) : "Wallet Funding";
-
-    const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
-    const contractCode = process.env.MONNIFY_CONTRACT_CODE || "1234567890";
-    const reference = `tx-monnify-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-
-    const accessToken = await getMonnifyAccessToken();
-
-    const body = {
-      amount: numAmount,
-      customerName: cleanName,
-      customerEmail: cleanEmail,
-      paymentReference: reference,
-      paymentDescription: cleanDesc,
-      currencyCode: "NGN",
-      contractCode,
-      redirectUrl: redirectUrl || `${req.protocol}://${req.get("host")}/`,
-      paymentMethods: ["CARD", "ACCOUNT_TRANSFER", "USSD"]
-    };
-
-    const response = await fetch(`${baseUrl}/api/v1/merchant/transactions/init-transaction`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (response.ok) {
-      const responseData: any = await response.json();
-      if (responseData.requestSuccessful) {
-        return res.json({
-          success: true,
-          reference,
-          contractCode,
-          apiKey: process.env.MONNIFY_API_KEY || "MK_TEST_MOCK_API_KEY",
-          isTestMode: baseUrl.includes("sandbox"),
-          checkoutUrl: responseData.responseBody.checkoutUrl,
-          paymentReference: responseData.responseBody.paymentReference
-        });
-      }
-    }
-
-    // In local sandbox fallback if credentials are not fully completed yet, provide clean seamless local mock flow
-    console.warn("[Monnify Init Fallback] Generating simulation payload due to missing or invalid merchant credentials.");
-    return res.json({
-      success: true,
-      reference,
-      contractCode,
-      apiKey: process.env.MONNIFY_API_KEY || "MK_TEST_MOCK_API_KEY",
-      isTestMode: true,
-      checkoutUrl: null, // trigger inline simulation overlay
-      paymentReference: `MOCK-${reference}`
-    });
-  } catch (error: any) {
-    console.error("Monnify init-payment exception:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
+app.post("/api/monnify/init-payment", (req, res) => {
+  return res.status(400).json({ error: "Monnify is deactivated on this portal. Please fund your wallet using Paystack." });
 });
 
-// Endpoint 2: Verify Payment (Query Transaction Status directly from Monnify)
-app.get("/api/monnify/verify-payment/:reference", async (req, res) => {
-  try {
-    const { reference } = req.params;
-    const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
-
-    // If it's a simulated reference, approve automatically
-    if (reference.startsWith("tx-monnify-") || reference.startsWith("MOCK-") || reference.startsWith("sim-")) {
-      return res.json({
-        success: true,
-        status: "PAID",
-        amount: reference.includes("fee") ? 100 : 5000,
-        customerEmail: "verified@taxidpdf.com",
-        paymentReference: reference,
-        transactionReference: `tr-${Math.floor(Math.random() * 10000000)}`
-      });
-    }
-
-    const accessToken = await getMonnifyAccessToken();
-
-    const response = await fetch(`${baseUrl}/api/v1/merchant/transactions/query?paymentReference=${encodeURIComponent(reference)}`, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`
-      }
-    });
-
-    if (response.ok) {
-      const responseData: any = await response.json();
-      if (responseData.requestSuccessful && responseData.responseBody) {
-        return res.json({
-          success: true,
-          status: responseData.responseBody.paymentStatus, // PAID, OVERPAID, PENDING, FAILED
-          amount: responseData.responseBody.amountPaid,
-          customerEmail: responseData.responseBody.customer?.email,
-          paymentReference: reference,
-          transactionReference: responseData.responseBody.transactionReference
-        });
-      }
-    }
-
-    // fallback simulation approval for non-configured states
-    return res.json({
-      success: true,
-      status: "PAID",
-      amount: 1000,
-      customerEmail: "verified@taxidpdf.com",
-      paymentReference: reference,
-      transactionReference: "SIMULATED_TRANS_REF"
-    });
-  } catch (error: any) {
-    console.error("Monnify verify-payment exception:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
+app.get("/api/monnify/verify-payment/:reference", (req, res) => {
+  return res.status(400).json({ error: "Monnify is deactivated on this portal. Please fund your wallet using Paystack." });
 });
 
-// Endpoint 2.5: Get Monnify Configuration mode
 app.get("/api/monnify/config", (req, res) => {
-  try {
-    const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
-    const isTestMode = baseUrl.includes("sandbox") || (process.env.MONNIFY_API_KEY || "").startsWith("MK_TEST");
-    return res.json({
-      success: true,
-      isTestMode,
-      baseUrl
-    });
-  } catch (err: any) {
-    return res.status(500).json({ success: false, error: err.message });
-  }
+  return res.json({
+    success: false,
+    isTestMode: false,
+    error: "Monnify is deactivated on this portal."
+  });
 });
 
 // Endpoint 2.55: Paystack Integration Settings & Config
@@ -963,73 +792,9 @@ app.get("/api/supabase-config", (req, res) => {
   }
 });
 
-// Endpoint 3: Reserve Dedicated Virtual Account dynamically (Protected and Rate Limited)
-app.post("/api/monnify/reserve-account", paymentLimiter, async (req, res) => {
-  try {
-    const { customerName, customerEmail, userId } = req.body;
-    if (!customerName || !customerEmail || !userId) {
-      return res.status(400).json({ error: "Missing parameters customerName, customerEmail, userId" });
-    }
-
-    if (typeof customerName !== "string" || typeof customerEmail !== "string" || typeof userId !== "string") {
-      return res.status(400).json({ error: "Invalid parameter types. Strings required." });
-    }
-
-    const cleanName = customerName.trim().substring(0, 100);
-    const cleanEmail = customerEmail.trim().substring(0, 150);
-    const cleanUserId = userId.trim().substring(0, 80);
-
-    const baseUrl = process.env.MONNIFY_BASE_URL || "https://sandbox.monnify.com";
-    const contractCode = process.env.MONNIFY_CONTRACT_CODE || "1234567890";
-    const accessToken = await getMonnifyAccessToken();
-    const reference = `acc-${cleanUserId.slice(0, 8)}-${Date.now()}`;
-
-    const body = {
-      accountReference: reference,
-      accountName: `TAXIDPDF-${cleanName.toUpperCase()}`,
-      customerEmail: cleanEmail,
-      customerName: cleanName,
-      contractCode,
-      currencyCode: "NGN",
-      getAllAvailableBanks: true
-    };
-
-    const response = await fetch(`${baseUrl}/api/v2/bank-transfer/reserved-accounts`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body)
-    });
-
-    if (response.ok) {
-      const responseData: any = await response.json();
-      if (responseData.requestSuccessful && responseData.responseBody) {
-        return res.json({
-          success: true,
-          reference,
-          accounts: responseData.responseBody.accounts // Array of banks with bankName, bankCode, accountNumber
-        });
-      }
-    }
-
-    // Secure fallback: Generate realistic virtual accounts dynamically
-    const mockAccounts = [
-      { bankName: "Wema Bank", bankCode: "035", accountNumber: "80" + Math.floor(10000000 + Math.random() * 90000000) },
-      { bankName: "Sterling Bank", bankCode: "232", accountNumber: "00" + Math.floor(10000000 + Math.random() * 90000000) },
-      { bankName: "Moniepoint Microfinance Bank", bankCode: "50515", accountNumber: "10" + Math.floor(10000000 + Math.random() * 90000000) }
-    ];
-
-    return res.json({
-      success: true,
-      reference,
-      accounts: mockAccounts
-    });
-  } catch (error: any) {
-    console.error("Monnify reserve-account exception:", error.message);
-    return res.status(500).json({ error: error.message });
-  }
+// Endpoint 3: Reserve Dedicated Virtual Account dynamically (DEACTIVATED)
+app.post("/api/monnify/reserve-account", (req, res) => {
+  return res.status(400).json({ error: "Reserved accounts feature via Monnify is deactivated." });
 });
 
 // Timing-safe comparison helper to completely block cryptographic timing attacks
