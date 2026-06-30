@@ -25,11 +25,16 @@ import {
 } from "lucide-react";
 
 export default function App() {
-  const { currentUser, isTrialActive, getRemainingTrialHours, portalSettings } = useUser();
+  const { currentUser, isTrialActive, getRemainingTrialHours, portalSettings, fundWallet } = useUser();
   const [activeTab, setActiveTab] = useState<string>("dashboard");
   const [taxpayerData, setTaxpayerData] = useState<TaxpayerData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [isAdminRoute, setIsAdminRoute] = useState<boolean>(false);
+
+  const [redirectingBeforePreview, setRedirectingBeforePreview] = useState<boolean>(false);
+  const [redirectError, setRedirectError] = useState<string>("");
+  const [verifyingTrx, setVerifyingTrx] = useState<boolean>(false);
+  const [trxStatusMsg, setTrxStatusMsg] = useState<string>("");
 
   // Secure path routing intercept for coachfranklin
   useEffect(() => {
@@ -41,8 +46,122 @@ export default function App() {
     }
   }, []);
 
-  const handleSearchResult = (data: TaxpayerData) => {
-    setTaxpayerData(data);
+  // Check for Paystack redirect parameters on mount
+  useEffect(() => {
+    if (!currentUser) return;
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get("reference") || params.get("trxref");
+    if (reference && (reference.startsWith("tx-paystack-") || reference.startsWith("tx-"))) {
+      setVerifyingTrx(true);
+      setTrxStatusMsg("Connecting to Paystack secure gateway to verify transaction...");
+      fetch(`/api/paystack/verify-payment/${reference}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.status === "success") {
+            const amountPaid = data.amount || 750;
+            fundWallet(amountPaid, `Instant Deposit via Paystack (Ref: ${reference})`);
+            setTrxStatusMsg(`Payment of ₦${amountPaid.toLocaleString()} verified successfully! Credited to your wallet.`);
+            
+            // Check if there was a pending search result we stored before redirect
+            const pendingResult = sessionStorage.getItem("pending_search_result");
+            if (pendingResult) {
+              try {
+                const parsed = JSON.parse(pendingResult);
+                setTaxpayerData(parsed);
+                sessionStorage.removeItem("pending_search_result");
+              } catch (e) {
+                console.error("Error parsing pending search result", e);
+              }
+            }
+            
+            setTimeout(() => {
+              setVerifyingTrx(false);
+              // Clean query parameters from URL without page reload
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }, 2500);
+          } else {
+            setTrxStatusMsg(`Payment verification failed: ${data.message || "Unapproved transaction state."}`);
+            setTimeout(() => {
+              setVerifyingTrx(false);
+              window.history.replaceState({}, document.title, window.location.pathname);
+            }, 3000);
+          }
+        })
+        .catch((err) => {
+          console.error("Verification exception:", err);
+          setTrxStatusMsg("A network error occurred while verifying payment with Paystack.");
+          setTimeout(() => {
+            setVerifyingTrx(false);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }, 3000);
+        });
+    }
+  }, [currentUser]);
+
+  const handleSearchResult = async (data: TaxpayerData) => {
+    // Check if user is on paid plan
+    const sub = currentUser?.subscription;
+    const isPaidSubActive = sub && ["Basic", "Premium", "Unlimited"].includes(sub.tier) && new Date(sub.expiresAt).getTime() > Date.now();
+    
+    // Check if user is eligible for trial promo (first slip)
+    const isTrial = isTrialActive();
+    const trialSlipCount = currentUser?.savedSlips.length || 0;
+    const isFirstTrialSlip = isTrial && trialSlipCount === 0;
+
+    if (currentUser?.isAdmin || isPaidSubActive || isFirstTrialSlip) {
+      // Allowed to see preview immediately
+      setTaxpayerData(data);
+    } else {
+      // On Starter On-Demand (or expired/used trial). Needs to pay 750 before seeing preview.
+      if (currentUser && currentUser.walletBalance >= 750) {
+        // Already has sufficient balance in wallet to pay 750, let them see preview
+        setTaxpayerData(data);
+      } else {
+        // Redirect to Paystack to pay 750
+        setRedirectingBeforePreview(true);
+        setRedirectError("");
+        try {
+          // Save search data to session storage so we can restore it when they return
+          sessionStorage.setItem("pending_search_result", JSON.stringify(data));
+          
+          const response = await fetch("/api/paystack/init-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: 750,
+              customerName: currentUser?.fullName || "Taxpayer",
+              customerEmail: currentUser?.email,
+              paymentDescription: `On-Demand JTB TIN Slip Retrieval: ${data.taxpayerName}`
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to contact Paystack checkout server.");
+          }
+
+          const resData = await response.json();
+          if (!resData.success) {
+            throw new Error(resData.error || "Failed to initialize Paystack checkout.");
+          }
+
+          if (resData.checkoutUrl) {
+            window.location.href = resData.checkoutUrl;
+          } else {
+            // Mock sandbox credit if no API keys
+            setTimeout(() => {
+              fundWallet(750, `Instant Deposit via Paystack (Ref: ${resData.reference})`);
+              setRedirectingBeforePreview(false);
+              setTaxpayerData(data);
+              sessionStorage.removeItem("pending_search_result");
+            }, 1500);
+          }
+        } catch (err: any) {
+          console.error(err);
+          setRedirectError(err.message || "Failed to initiate Paystack payment. Please try again.");
+          setRedirectingBeforePreview(false);
+        }
+      }
+    }
   };
 
   const handleReset = () => {
@@ -59,6 +178,38 @@ export default function App() {
         <LandingPage />
         <SupportChatWidget />
       </>
+    );
+  }
+
+  if (verifyingTrx || redirectingBeforePreview) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center animate-fadeIn" id="app-paystack-loading-overlay">
+        <div className="bg-white rounded-3xl border border-slate-100 max-w-md w-full shadow-2xl p-8 space-y-6">
+          <div className="relative flex justify-center">
+            <div className="w-16 h-16 rounded-full border-4 border-slate-100 border-t-emerald-600 animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-8 h-8 animate-pulse text-emerald-600">
+                <svg viewBox="0 0 100 100" className="w-full h-full">
+                  <path d="M50 10 C72 10 85 15 85 20 C85 52 72 75 50 90 C28 75 15 52 15 20 C15 15 28 10 50 10 Z" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-slate-900 mb-2">
+              {verifyingTrx ? "JTB Payment Verification" : "Connecting to Paystack Gateway"}
+            </h3>
+            <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+              {verifyingTrx ? trxStatusMsg : "Redirecting to Paystack checkout to authorize on-demand retrieval token (₦750)..."}
+            </p>
+          </div>
+          {redirectError && (
+            <div className="bg-red-50 text-red-800 p-4 rounded-xl text-xs font-semibold border border-red-100/60">
+              {redirectError}
+            </div>
+          )}
+        </div>
+      </div>
     );
   }
 

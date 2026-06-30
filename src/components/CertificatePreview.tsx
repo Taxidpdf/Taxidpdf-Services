@@ -74,6 +74,50 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
 
   const paymentRequired = !isTrialOrSubActive() && !isAlreadySaved;
 
+  const [redirectingPaystack, setRedirectingPaystack] = useState(false);
+  const [paystackError, setPaystackError] = useState("");
+
+  const handlePaystackPayment = async (amount: number) => {
+    setPaystackError("");
+    setRedirectingPaystack(true);
+    try {
+      const response = await fetch("/api/paystack/init-payment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: amount,
+          customerName: currentUser?.fullName || "Taxpayer",
+          customerEmail: currentUser?.email,
+          paymentDescription: `Pay ₦${amount} for JTB TIN Slip Download (${taxpayerData.taxpayerName})`
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to contact Paystack checkout server.");
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.error || "Failed to initialize Paystack checkout.");
+      }
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      } else {
+        // Fallback simulation mode
+        setTimeout(() => {
+          fundWallet(amount, `Instant Deposit via Paystack (Ref: ${data.reference})`);
+          setRedirectingPaystack(false);
+          setBillingSuccess(`Sandbox Payment of ₦${amount} successful! Click Download or Print again.`);
+        }, 1500);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setPaystackError(err.message || "Could not connect to Paystack. Please try again.");
+      setRedirectingPaystack(false);
+    }
+  };
+
   const handleCopyAccount = () => {
     navigator.clipboard.writeText(currentUser?.walletAccountNumber || "1024859384");
     setCopiedAccount(true);
@@ -148,7 +192,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
   const handleDownloadPDF = async (bypassPaymentCheck = false) => {
     if (paymentRequired && !bypassPaymentCheck) {
       setPendingAction('download');
-      setShowPaymentModal(true);
+      handlePaystackPayment(currentFee);
       return;
     }
 
@@ -337,7 +381,7 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
   const handlePrint = (bypassPaymentCheck = false) => {
     if (paymentRequired && !bypassPaymentCheck) {
       setPendingAction('print');
-      setShowPaymentModal(true);
+      handlePaystackPayment(currentFee);
       return;
     }
 
@@ -488,20 +532,36 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
               </div>
             )}
 
+            {paystackError && (
+              <div className="bg-red-50 text-red-800 p-4 rounded-xl text-xs font-semibold border border-red-100/60" id="paystack-error-alert">
+                {paystackError}
+              </div>
+            )}
+
             {paymentRequired ? (
               <button
+                id="btn-pay-download"
                 onClick={() => {
                   setPendingAction('download');
-                  setShowPaymentModal(true);
+                  handlePaystackPayment(currentFee);
                 }}
-                disabled={downloading}
-                className="w-full select-none py-3.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-amber-200 cursor-pointer"
+                disabled={downloading || redirectingPaystack}
+                className="w-full select-none py-3.5 px-4 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-amber-200 cursor-pointer disabled:opacity-50"
               >
-                <Coins className="w-4 h-4" />
-                <span>Pay ₦750 & Download PDF</span>
+                {redirectingPaystack && pendingAction === 'download' ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Coins className="w-4 h-4" />
+                )}
+                <span>
+                  {redirectingPaystack && pendingAction === 'download' 
+                    ? "Redirecting to Paystack..." 
+                    : `PAY ₦${currentFee} TO DOWNLOAD`}
+                </span>
               </button>
             ) : (
               <button
+                id="btn-download-pdf"
                 onClick={() => handleDownloadPDF(false)}
                 disabled={downloading}
                 className="w-full select-none py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-200 cursor-pointer disabled:opacity-50"
@@ -513,17 +573,28 @@ export default function CertificatePreview({ taxpayerData, onReset, onNavigateTo
 
             {paymentRequired ? (
               <button
+                id="btn-pay-print"
                 onClick={() => {
                   setPendingAction('print');
-                  setShowPaymentModal(true);
+                  handlePaystackPayment(currentFee);
                 }}
-                className="w-full select-none py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
+                disabled={downloading || redirectingPaystack}
+                className="w-full select-none py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer disabled:opacity-50"
               >
-                <Coins className="w-4 h-4 text-slate-500" />
-                <span>Pay ₦750 & Print Slip</span>
+                {redirectingPaystack && pendingAction === 'print' ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-500" />
+                ) : (
+                  <Coins className="w-4 h-4 text-slate-500" />
+                )}
+                <span>
+                  {redirectingPaystack && pendingAction === 'print' 
+                    ? "Redirecting..." 
+                    : `PAY ₦${currentFee} TO PRINT SLIP`}
+                </span>
               </button>
             ) : (
               <button
+                id="btn-print-slip"
                 onClick={() => handlePrint(false)}
                 className="w-full select-none py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs uppercase tracking-wider rounded-xl flex items-center justify-center gap-2 transition cursor-pointer"
               >
