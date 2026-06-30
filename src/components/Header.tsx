@@ -18,9 +18,13 @@ export default function Header({ onEnterAdmin, onLogoClick }: HeaderProps) {
   });
 
   React.useEffect(() => {
-    // Keep document always in light mode as requested by the user, while keeping the switch button functional
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
   }, [isDarkMode]);
 
   const getInitials = (name: string) => {

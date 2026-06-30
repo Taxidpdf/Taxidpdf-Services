@@ -153,9 +153,13 @@ export default function LandingPage() {
   });
 
   React.useEffect(() => {
-    // Keep document always in light mode as requested by the user, while keeping the switch button functional
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
   }, [isDarkMode]);
   
   // Auth Form Fields
@@ -1053,7 +1057,75 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* FOOTER REMOVED ACCORDING TO USER DIRECTIVE */}
+      {/* 6. RESTORED FOOTER SECTION (ONLY ON LANDING / HOME PAGE) */}
+      <footer className="bg-[#0b1329] text-slate-400 py-12 border-t border-slate-800/60 relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          
+          {/* Brand & Quick Actions Row */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 text-lg font-black tracking-tight text-white">
+                <span>TaxID</span>
+                <span className="text-emerald-500">PDF</span>
+                <span className="text-slate-400 text-sm">.com</span>
+              </div>
+              <p className="text-slate-500 text-xs leading-relaxed max-w-md">
+                An independent high-speed digital helper gateway designed for automated non-individual/individual Nigerian TIN document layout compilation.
+              </p>
+            </div>
+
+            {/* Quick Links Overlay Activators */}
+            <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-slate-300">
+              <button 
+                onClick={() => setActiveInfoModal("security")}
+                className="hover:text-emerald-400 transition cursor-pointer"
+              >
+                Security Ledger
+              </button>
+              <span className="text-slate-700 select-none">•</span>
+              <button 
+                onClick={() => setActiveInfoModal("support")}
+                className="hover:text-emerald-400 transition cursor-pointer"
+              >
+                Support Helpline
+              </button>
+              <span className="text-slate-700 select-none">•</span>
+              <button 
+                onClick={() => setActiveInfoModal("legal")}
+                className="hover:text-emerald-400 transition cursor-pointer"
+              >
+                Legal Counsel
+              </button>
+            </div>
+          </div>
+
+          <div className="h-[1px] bg-slate-800/40" />
+
+          {/* Official Disclaimer Notice Banner */}
+          <div className="bg-[#080d1a] border border-slate-800/40 rounded-2xl p-6 space-y-3">
+            <h5 className="text-[10px] font-black tracking-widest text-amber-500 uppercase">
+              OFFICIAL NOTICE & TERMS OF USAGE
+            </h5>
+            <p className="text-[10px] text-slate-500 leading-relaxed">
+              Disclaimer: taxidpdf.com operates solely as a third-party helper wrapper facilitating official tax database queries. We do not issue corporate TIN registrations or represent state boards. All original ownership is preserved with the Nigeria Revenue Services (NRS) and the Joint Tax Board (JTB) of Nigeria. For profile rectifications, please approach authorized physical state board offices. This is an independent third-party website to make CAC agents and business owners generate JTB/NRS TIN slips as shown on the official website https://taxid.nrs.gov.ng/. We only work with the information available publicly on this website.
+            </p>
+          </div>
+
+          <div className="h-[1px] bg-slate-800/20" />
+
+          {/* Copyright & Technical Encryption Status Bar */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-500 pt-2">
+            <div>
+              &copy; 2026 taxidpdf.com Portal. Direct Database Wrapper. All rights reserved.
+            </div>
+            <div className="flex items-center gap-1.5 text-[9px] font-bold text-emerald-500 tracking-wider uppercase">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              GATEWAY ENCRYPTED VIA SECURE 256-BIT SSL PROTOCOLS
+            </div>
+          </div>
+
+        </div>
+      </footer>
 
       {/* Information Modals Overlay */}
       {activeInfoModal && (

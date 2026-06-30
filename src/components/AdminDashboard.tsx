@@ -63,9 +63,13 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   });
 
   React.useEffect(() => {
-    // Keep document always in light mode as requested by the user, while keeping the switch button functional
-    document.documentElement.classList.remove("dark");
-    localStorage.setItem("theme", "light");
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
   }, [isDarkMode]);
   
   // Manual admin top-up form state
@@ -334,7 +338,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
+      <div className="admin-panel-theme min-h-screen bg-slate-900 flex items-center justify-center p-4 font-sans">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#064e3b,transparent_50%)] opacity-30 pointer-events-none" />
         <div className="bg-slate-950 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-md w-full space-y-6 shadow-2xl relative z-10 animate-scaleUp">
           
@@ -723,7 +727,7 @@ export default function AdminDashboard({ onExit }: { onExit: () => void }) {
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
+    <div className="admin-panel-theme min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
       
       {/* Admin Top Navbar */}
       <header className="bg-slate-900 border-b border-slate-800 p-4 sticky top-0 z-30">
